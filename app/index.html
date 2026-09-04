@@ -100,6 +100,13 @@ textarea{width:100%;min-height:130px;resize:vertical;font-size:13.5px}
       </select>
       <button class="btn btn-gold" id="createBtn">创建项目</button>
     </div>
+    <div class="row">
+      <input id="epCount" type="number" value="10" min="1" max="300" style="width:130px" placeholder="总集数">
+      <span style="align-self:center;color:var(--ink-faint);font-size:13px">集 ×</span>
+      <input id="epMin" type="number" value="3" step="0.5" min="0.5" max="30" style="width:130px" placeholder="单集分钟">
+      <span style="align-self:center;color:var(--ink-faint);font-size:13px">分钟 · 题材</span>
+      <input id="genre" style="flex:1" placeholder="留空 = AI 根据小说自动判断">
+    </div>
     <textarea id="novelText" placeholder="也可以直接把小说全文粘贴到这里(至少 50 字)…"></textarea>
     <div class="err" id="createErr"></div>
   </div>
@@ -169,8 +176,13 @@ $('#projSel').onchange = e => { cur = e.target.value; $('#console').style.displa
 
 async function create(){
   $('#createErr').textContent = '';
+  const params = {
+    episodes: parseInt($('#epCount').value) || undefined,
+    minutes: parseFloat($('#epMin').value) || undefined,
+    genre: $('#genre').value.trim() || undefined,
+  };
   const r = await api('/api/project', {method:'POST',headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({name: $('#novelName').value, novel: $('#novelText').value})});
+    body: JSON.stringify({name: $('#novelName').value, novel: $('#novelText').value, params})});
   if (r.error){ $('#createErr').textContent = r.error; return; }
   $('#novelName').value=''; $('#novelText').value='';
   cur = r.name; refresh();

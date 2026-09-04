@@ -56,12 +56,21 @@ const PREREQ = {
   storyboard: files => files.some(x => x.endsWith('-script.json')) ? null : '需要先完成第 4 步(剧本)',
 };
 
+function loadParams(project) {
+  try { return JSON.parse(fs.readFileSync(path.join(projectDir(project), 'params.json'), 'utf8')); } catch { return null; }
+}
+const noAsk = '若信息足以开工,不要向用户提问或等待确认,直接按上述参数完成改编并产出全部文件。';
 const prompts = {
-  outline:    p => `使用 novel-outline 技能:读取当前目录的 novel.txt,把小说改编成短剧大纲。所有产物(<剧名>-outline.json / .md / -report.html)直接生成到当前目录,不要建子目录。完成后回复一行 DONE。`,
-  characters: p => `使用 novel-characters 技能:基于当前目录下的 *-outline.json 生成角色设定集,产物(<剧名>-cast.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
-  art:        p => `使用 novel-art 技能:基于当前目录下的 *-outline.json 生成美术设定集(场景+叙事道具),产物(<剧名>-art.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
-  script:     p => `使用 novel-script 技能:基于当前目录的大纲产物(*-outline.json)写剧本,产物(<剧名>-script.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
-  storyboard: p => `使用 novel-storyboard 技能:基于当前目录的 *-script.json 出分镜,产物(<剧名>-storyboard.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
+  outline:    p => {
+    const q = loadParams(p) || {};
+    const ep = q.episodes || 80, min = q.minutes || 1.5;
+    const genre = q.genre ? `题材:${q.genre}` : '题材:根据小说内容自动判断';
+    return `使用 novel-outline 技能:读取当前目录的 novel.txt,把小说改编成短剧大纲。改编参数:总集数 ${ep} 集,单集时长约 ${min} 分钟;${genre}。${noAsk}所有产物(<剧名>-outline.json / .md / -report.html)直接生成到当前目录,不要建子目录。完成后回复一行 DONE。`;
+  },
+  characters: p => `使用 novel-characters 技能:基于当前目录下的 *-outline.json 生成角色设定集。${noAsk}产物(<剧名>-cast.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
+  art:        p => `使用 novel-art 技能:基于当前目录下的 *-outline.json 生成美术设定集(场景+叙事道具)。${noAsk}产物(<剧名>-art.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
+  script:     p => `使用 novel-script 技能:基于当前目录的大纲产物(*-outline.json)写剧本。${noAsk}产物(<剧名>-script.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
+  storyboard: p => `使用 novel-storyboard 技能:基于当前目录的 *-script.json 出分镜。${noAsk}产物(<剧名>-storyboard.json / .md / -report.html)写到当前目录。完成后回复一行 DONE。`,
 };
 
 // ---------- 任务状态 ----------
@@ -196,11 +205,14 @@ const server = http.createServer(async (req, res) => {
     });
   }
   if (p === '/api/project' && req.method === 'POST') {
-    const { name, novel } = JSON.parse(await readBody(req));
+    const { name, novel, params } = JSON.parse(await readBody(req));
     const safe = (name || '').trim().replace(/[\\/:*?"<>|\s]+/g, '-').slice(0, 60);
     if (!safe) return json(res, 400, { error: '项目名不能为空' });
     if (!novel || novel.trim().length < 50) return json(res, 400, { error: '小说内容太短(至少 50 字)' });
     fs.writeFileSync(path.join(projectDir(safe), 'novel.txt'), novel, 'utf8');
+    if (params && (params.episodes || params.minutes || params.genre)) {
+      fs.writeFileSync(path.join(projectDir(safe), 'params.json'), JSON.stringify(params, null, 2), 'utf8');
+    }
     return json(res, 200, { ok: true, name: safe });
   }
   if (p === '/api/run' && req.method === 'POST') {
