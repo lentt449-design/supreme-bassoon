@@ -153,6 +153,7 @@ const server = http.createServer(async (req, res) => {
 
   // API
   if (p === '/api/steps' && req.method === 'GET') {
+    if (!fs.existsSync(WS_DIR)) fs.mkdirSync(WS_DIR, { recursive: true });
     const projects = fs.readdirSync(WS_DIR).filter(f => fs.statSync(path.join(WS_DIR, f)).isDirectory());
     const agent = await getAgentCached();
     return json(res, 200, {
