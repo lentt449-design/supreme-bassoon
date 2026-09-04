@@ -211,11 +211,10 @@ footer{
 .rail-btn .st.run{background:var(--gold-bright);animation:blink 1.2s infinite}
 
 .dcontent{min-width:0}
-.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap}
-.dhead .t{display:flex;align-items:baseline;gap:14px}
-.dhead .t h2{font-family:var(--serif);font-size:24px;font-weight:600}
-.dhead .t .sub{font-family:var(--mono);font-size:11px;color:var(--gold-dim);letter-spacing:.2em}
-.dhead .ops{display:flex;gap:10px}
+.dhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.dhead .t h2{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.2}
+.dkicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;color:var(--gold-dim);margin-bottom:6px}
+.dhead .ops{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
 .pane{display:none}
 .pane.on{display:block}
@@ -294,6 +293,26 @@ footer{
 /* json 兜底树 */
 .jtree{font-family:var(--mono);font-size:12px;line-height:1.9;color:#cfc5ab;background:#080704;
   border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+
+/* 提示词块 */
+.pbox{border:1px solid var(--line);border-radius:10px;background:#0a0805;margin-top:8px;overflow:hidden}
+.pbox-h{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;
+  border-bottom:1px solid var(--line);background:rgba(217,184,119,.04)}
+.pbox-h .lb{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.15em}
+.copy{font-family:var(--mono);font-size:10.5px;color:var(--gold);background:none;border:1px solid var(--line-strong);
+  border-radius:6px;padding:2px 10px;cursor:pointer}
+.copy:hover{border-color:var(--gold);color:var(--gold-bright)}
+.pbox-t{padding:10px 12px;font-size:11.5px;line-height:1.7;color:var(--ink-dim);cursor:pointer;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+.pbox-t.open{-webkit-line-clamp:unset}
+.ftabs{display:flex;gap:8px;margin-bottom:16px}
+.ftab{font-size:12.5px;color:var(--ink-dim);border:1px solid var(--line);border-radius:9px;
+  padding:6px 16px;cursor:pointer;background:none;transition:all .2s}
+.ftab b{color:var(--gold);font-weight:600;margin-left:3px}
+.ftab:hover{border-color:var(--line-strong)}
+.ftab.on{color:var(--gold-bright);border-color:var(--gold);background:rgba(217,184,119,.07)}
+.desc-lb{font-family:var(--mono);font-size:10px;color:var(--gold-dim);letter-spacing:.15em;margin-right:6px}
+.meta-row{font-size:12.5px;color:var(--ink-dim);margin-top:6px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -387,7 +406,10 @@ footer{
       <div class="rail" id="rail"></div>
       <div class="dcontent">
         <div class="dhead">
-          <div class="t"><h2 id="dTitle">概览</h2><span class="sub" id="dSub">OVERVIEW</span></div>
+          <div class="t">
+            <div class="dkicker" id="dKicker"></div>
+            <h2 id="dTitle">概览</h2>
+          </div>
           <div class="ops" id="dOps"></div>
         </div>
         <div class="pane" id="pane"></div>
@@ -407,7 +429,7 @@ const STEPS = [
   {id:'storyboard',n:5,name:'分镜',skill:'novel-storyboard',ic:'▣',file:'-storyboard.json'},
 ];
 let cur = null, pollTimer = null, curLog = null, pollAttempts = 0;
-let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null;
+let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null, artFilter = 'all';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
@@ -510,9 +532,17 @@ async function renderDetail(data){
       return `<div class="rail-btn ${cls}" onclick="${st==='locked'?'':`setTab('${s.id}')`}"><span class="ic">${s.ic}</span><span class="lb">${s.name}</span><span class="st ${stc}"></span></div>`;
     }).join('');
   // head
-  const meta = dTab==='overview' ? {name:'概览',sub:'OVERVIEW'} : STEPS.find(s=>s.id===dTab);
-  $('#dTitle').textContent = cur + ' · ' + meta.name;
-  $('#dSub').textContent = meta.sub || meta.skill || '';
+  const KICKERS = {
+    overview: 'PROJECT · 总览',
+    outline: 'STAGE 01 · 改什么 · OUTLINE',
+    characters: 'STAGE 02 · 谁 · CAST',
+    art: 'STAGE 03 · 在哪 · 拿什么 · ART',
+    script: 'STAGE 04 · 发生什么 · SCRIPT',
+    storyboard: 'STAGE 05 · 怎么拍 · STORYBOARD',
+  };
+  const meta = dTab==='overview' ? {name:'总览'} : STEPS.find(s=>s.id===dTab);
+  $('#dTitle').textContent = meta.name;
+  $('#dKicker').textContent = `${cur} — ${KICKERS[dTab]}`;
   const st = proj.states[dTab];
   $('#dOps').innerHTML = dTab==='overview' ? '' :
     `<span class="state ${st}">${{ready:'可运行',running:'运行中',done:'已完成',locked:'未解锁',busy:'等待中'}[st]}</span>` +
@@ -536,9 +566,41 @@ async function renderDetail(data){
   const render = RENDER[dTab];
   pane.innerHTML = render ? render(json, proj) : `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
 }
-function setTab(t){ dTab = t; lastSig = null; refresh(); }
+function setTab(t){ dTab = t; artFilter = 'all'; lastSig = null; refresh(); }
+function setArtFilter(f){ artFilter = f; lastSig = null; refresh(); }
 
 /* ---- 各阶段渲染器 ---- */
+function copyBtn(){
+  return `<button class="copy" onclick="copyText(this)">复制</button>`;
+}
+function pbox(label, text){
+  if (!text) return '';
+  return `<div class="pbox"><div class="pbox-h"><span class="lb">${label}</span>${copyBtn()}</div><div class="pbox-t" onclick="this.classList.toggle('open')">${esc(text)}</div></div>`;
+}
+function copyText(btn){
+  const t = btn.closest('.pbox').querySelector('.pbox-t').textContent;
+  const done = ()=>{ btn.textContent='已复制'; setTimeout(()=>btn.textContent='复制',1200); };
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(t).then(done).catch(()=>{ fallbackCopy(t); done(); });
+  } else { fallbackCopy(t); done(); }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+}
+function tierCls(v){
+  v = (v||'').toLowerCase();
+  if (['protagonist','lead','main'].includes(v)) return 'lead';
+  if (['major','support','supporting'].includes(v)) return 'support';
+  return 'functional';
+}
+function personaChips(arr){
+  return (arr||[]).map(x=>`<span class="idchip">${esc(typeof x==='string'?x:(x.state||x.name||''))}</span>`).join('');
+}
+
 const RENDER = {
   outline(json){
     const eps = (json.episodes||[]).map(e => `
@@ -560,29 +622,71 @@ const RENDER = {
     return eps || '<div class="emptybox"><div class="big">大纲里没有分集数据</div></div>';
   },
   characters(json){
-    const list = json.characters || json.cast || [];
-    return `<div class="cgrid">${list.map(c => `
-      <div class="ccard">
-        <div class="hd"><span class="nm">${esc(c.name)}</span><span class="tier ${esc(c.tier||'')}">${esc((c.tier||'').toUpperCase()||c.id||'')}</span></div>
-        <div class="role">${esc(c.role)}</div>
-        ${c.arc?`<div class="arc"><span style="color:var(--gold-dim);letter-spacing:.08em">弧光 </span>${esc(c.arc)}</div>`:''}
-      </div>`).join('')}</div>`;
+    const list = json.characters || [];
+    $('#dOps').insertAdjacentHTML('beforeend', `<span class="chip">${list.length} 人</span>`);
+    return (json.summary ? `<div class="syn" style="-webkit-line-clamp:unset;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);margin-bottom:16px">${esc(json.summary)}</div>` : '') +
+      `<div class="cgrid">${list.map(c => {
+        const p = c.persona || {};
+        const img = c.image || {};
+        return `<div class="ccard">
+        <div class="hd"><span class="nm">${esc(c.name)}</span><span class="tier ${tierCls(c.importance)}">${esc((c.importance||'').toUpperCase()||'')}</span></div>
+        ${c.oneLiner?`<div class="role" style="color:var(--gold);font-size:12.5px">${esc(c.oneLiner)}</div>`:''}
+        ${p.identity?`<div class="meta-row"><span class="desc-lb">身份</span>${esc(p.identity)}${p.gender?` · ${esc(p.gender)}`:''}${p.ageRange?` · ${esc(p.ageRange)}`:''}</div>`:''}
+        ${p.appearance?`<div class="meta-row"><span class="desc-lb">外貌</span>${esc(p.appearance)}</div>`:''}
+        ${(p.personality&&p.personality.length)?`<div class="meta-row"><span class="desc-lb">性格</span>${personaChips(p.personality)}</div>`:''}
+        ${p.temperament?`<div class="meta-row"><span class="desc-lb">气质</span>${esc(p.temperament)}</div>`:''}
+        ${p.motivation?`<div class="meta-row"><span class="desc-lb">动机</span>${esc(p.motivation)}</div>`:''}
+        ${p.arc?`<div class="meta-row"><span class="desc-lb">弧光</span>${esc(p.arc)}</div>`:''}
+        ${(p.relationships&&p.relationships.length)?`<div class="meta-row"><span class="desc-lb">关系</span>${p.relationships.map(r=>`${esc(r.name)}(${esc(r.relation)})`).join('、')}</div>`:''}
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词${img.style?` · ${esc(img.style)}`:''}</div>
+        ${pbox(img.promptLocal?'中文提示词':'提示词 PROMPT', img.promptLocal || img.prompt)}
+        ${pbox('英文提示词 EN', img.prompt)}
+        ${pbox('三视图 SHEET', img.sheet)}
+        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+      </div>`;
+      }).join('')}</div>`;
   },
   art(json){
-    const scenes = json.scenes || [];
-    const props = json.props || [];
-    const sHtml = scenes.map(s => `
-      <div class="scard">
+    const scenes = json.scenes || [], props = json.props || [];
+    $('#dOps').insertAdjacentHTML('beforeend', `<span class="chip">${scenes.length + props.length} 项</span>`);
+    const f = artFilter;
+    const tabs = `<div class="ftabs">
+      <button class="ftab ${f==='all'?'on':''}" onclick="setArtFilter('all')">全部<b>${scenes.length+props.length}</b></button>
+      <button class="ftab ${f==='scene'?'on':''}" onclick="setArtFilter('scene')">场景<b>${scenes.length}</b></button>
+      <button class="ftab ${f==='prop'?'on':''}" onclick="setArtFilter('prop')">道具<b>${props.length}</b></button>
+    </div>`;
+    const sceneCard = s => {
+      const img = s.image || {};
+      const lights = Array.isArray(s.lighting) ? s.lighting : [];
+      return `<div class="scard" style="padding:16px 18px">
         <div class="hd"><span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>${s.primary?'<span class="primary-tag">主场景</span>':''}</div>
-        ${s.reusePlan?`<div class="plan">复用方案:${esc(s.reusePlan)}</div>`:''}
-      </div>`).join('');
-    const pHtml = props.map(p => `
-      <div class="scard">
-        <div class="hd"><span class="id">${esc(p.id)}</span><span class="nm">${esc(p.name)}</span></div>
-        ${p.usage?`<div class="plan">${esc(p.usage)}</div>`:''}
-      </div>`).join('');
-    return `<h4 style="font-family:var(--serif);color:var(--gold);margin-bottom:12px">场景 ${scenes.length}</h4>${sHtml}
-      ${props.length?`<h4 style="font-family:var(--serif);color:var(--gold);margin:20px 0 12px">叙事道具 ${props.length}</h4>${pHtml}`:''}`;
+        ${s.summary?`<div class="meta-row">${esc(s.summary)}</div>`:''}
+        ${s.usage?`<div class="meta-row"><span class="desc-lb">用途</span>${esc(s.usage)}</div>`:''}
+        ${(s.anchors&&s.anchors.length)?`<div class="meta-row"><span class="desc-lb">锚点</span>${personaChips(s.anchors)}</div>`:''}
+        ${lights.length?`<div class="meta-row"><span class="desc-lb">光照</span>${personaChips(lights.map(l=>l.state))}</div>`:''}
+        ${lights.map(l=>pbox(`光照 · ${l.state}`, l.prompt)).join('')}
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
+        ${pbox('提示词 PROMPT', img.prompt)}
+        ${pbox('三视图 SHEET', img.sheet)}
+        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+        ${(img.tags&&img.tags.length)?`<div class="ep-ids">${personaChips(img.tags)}</div>`:''}
+      </div>`;
+    };
+    const propCard = p => {
+      const img = p.image || {};
+      return `<div class="scard" style="padding:16px 18px">
+        <div class="hd"><span class="id">${esc(p.id)}</span><span class="nm">${esc(p.name)}</span>${p.scale?`<span class="idchip">${esc(p.scale)}</span>`:''}</div>
+        ${p.summary?`<div class="meta-row">${esc(p.summary)}</div>`:''}
+        ${p.usage?`<div class="meta-row"><span class="desc-lb">用途</span>${esc(p.usage)}</div>`:''}
+        ${(p.states&&p.states.length)?`<div class="meta-row"><span class="desc-lb">状态</span>${personaChips(p.states)}</div>`:''}
+        ${(p.carriedBy&&p.carriedBy.length)?`<div class="meta-row"><span class="desc-lb">携带者</span>${personaChips(p.carriedBy)}</div>`:''}
+        ${(p.relatedScenes&&p.relatedScenes.length)?`<div class="meta-row"><span class="desc-lb">出现场景</span>${personaChips(p.relatedScenes)}</div>`:''}
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
+        ${pbox('提示词 PROMPT', img.prompt)}
+        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+      </div>`;
+    };
+    return tabs + (f!=='prop' ? scenes.map(sceneCard).join('') : '') + (f!=='scene' ? props.map(propCard).join('') : '');
   },
   script(json, proj){
     // 结构化剧本:适配 episodes[].scenes[].beats/lines 或通用
