@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 短剧工作台</title>
+<style>
+:root{
+  --bg:#0b0906;--panel:#161209;--line:rgba(217,184,119,.14);--line-strong:rgba(217,184,119,.28);
+  --gold:#d9b877;--gold-bright:#f0d9a8;--gold-dim:#8f7b52;
+  --ink:#efe9dc;--ink-dim:#a89e8a;--ink-faint:#6e6553;
+  --serif:"Songti SC","Noto Serif SC",serif;--mono:"SF Mono",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.6;min-height:100vh;
+  background-image:radial-gradient(900px 400px at 70% -10%,rgba(217,184,119,.08),transparent 60%)}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+header{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.logo{display:flex;gap:12px;align-items:center}
+.mark{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,#e8cd93,#b4924f);color:#241a08;font-family:var(--serif);font-weight:900;font-size:19px;display:grid;place-items:center}
+.logo b{font-size:16px}.logo small{display:block;font-size:10px;color:var(--gold-dim);letter-spacing:.25em}
+.agent-tag{font-family:var(--mono);font-size:12px;color:var(--gold);border:1px solid var(--line-strong);border-radius:999px;padding:6px 14px}
+h1{font-family:var(--serif);font-size:26px;font-weight:600;margin-bottom:4px}
+.sub{color:var(--ink-dim);font-size:13.5px;margin-bottom:26px}
+
+/* 新建项目 */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:22px}
+.card h2{font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:12px}
+.row{display:flex;gap:12px;margin-bottom:12px}
+input,select,textarea{
+  background:#0d0b07;border:1px solid var(--line-strong);border-radius:9px;color:var(--ink);
+  padding:10px 14px;font-size:14px;font-family:inherit;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{width:100%;min-height:130px;resize:vertical;font-size:13.5px}
+#novelName{width:260px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:999px;font-size:14px;cursor:pointer;border:1px solid transparent;transition:all .2s}
+.btn-gold{background:linear-gradient(135deg,#e8cd93,#c5a05e);color:#241a08;font-weight:700}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(217,184,119,.3)}
+.btn-ghost{border-color:var(--line-strong);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.err{color:#e08a7f;font-size:13px;margin-top:8px;white-space:pre-wrap}
+
+/* 步骤 */
+.steps{display:grid;gap:14px}
+.step{display:grid;grid-template-columns:56px 1fr auto;gap:18px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:18px 22px;
+  background:linear-gradient(180deg,rgba(217,184,119,.03),transparent 70%)}
+.step.running{border-color:var(--gold);animation:glow 1.6s infinite}
+@keyframes glow{50%{box-shadow:0 0 22px rgba(217,184,119,.25)}}
+.step.done{border-color:rgba(105,193,122,.4)}
+.no{font-family:var(--serif);font-size:28px;color:var(--gold-dim)}
+.step.done .no{color:#69c17a}
+.info b{font-size:15.5px}
+.info small{display:block;font-family:var(--mono);font-size:11px;color:var(--gold-dim);letter-spacing:.1em;margin-top:2px}
+.lock{font-size:12px;color:var(--ink-faint)}
+.state{font-size:12px;padding:4px 12px;border-radius:999px;border:1px solid var(--line-strong);font-family:var(--mono)}
+.state.running{color:var(--gold-bright);border-color:var(--gold)}
+.state.done{color:#69c17a;border-color:rgba(105,193,122,.4)}
+.state.ready{color:var(--gold)}
+.state.locked,.state.busy{color:var(--ink-faint)}
+.actions{display:flex;gap:10px;align-items:center}
+.btn-run{padding:8px 18px;font-size:13px}
+
+/* 日志与报告 */
+#console{background:#0d0b07;border:1px solid var(--line-strong);border-radius:12px;padding:16px;font-family:var(--mono);font-size:12.5px;line-height:1.75;color:#cfc5ab;height:260px;overflow-y:auto;white-space:pre-wrap;margin-top:18px;display:none}
+.outputs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.out-link{font-family:var(--mono);font-size:12px;color:var(--gold);border:1px solid var(--line-strong);border-radius:8px;padding:6px 12px;text-decoration:none}
+.out-link:hover{background:rgba(217,184,119,.08)}
+#viewer{margin-top:14px;width:100%;height:640px;border:1px solid var(--line-strong);border-radius:12px;background:#fff;display:none}
+.hint{color:var(--ink-faint);font-size:12.5px;margin-top:14px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <span class="mark">剧</span>
+      <span><b>AI 短剧工作台</b><small>LOCAL · NOVEL → STORYBOARD</small></span>
+    </div>
+    <span class="agent-tag" id="agentTag">检测 agent 中…</span>
+  </header>
+
+  <h1>丢一本小说进去,五步出投产素材</h1>
+  <div class="sub">点「运行」后,后台会调用你本机的 Claude Code / codex 执行对应 skill。每步耗时几分钟到几十分钟,请保持本页打开。</div>
+
+  <div class="card">
+    <h2>① 新建项目 — 粘贴小说</h2>
+    <div class="row">
+      <input id="novelName" placeholder="项目名,如:渡口">
+      <select id="agent">
+        <option value="auto">自动选择 CLI</option>
+        <option value="claude">强制 Claude Code</option>
+        <option value="codex">强制 Codex</option>
+      </select>
+      <button class="btn btn-gold" id="createBtn">创建项目</button>
+    </div>
+    <textarea id="novelText" placeholder="把小说全文粘贴到这里(至少 50 字)…"></textarea>
+    <div class="err" id="createErr"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 流水线 — 点击运行</h2>
+    <div style="margin-bottom:14px">
+      <label style="font-size:13px;color:var(--ink-dim)">当前项目:</label>
+      <select id="projSel" style="margin-left:8px"></select>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div id="console"></div>
+    <div class="outputs" id="outputs"></div>
+    <div class="hint" id="hint"></div>
+    <iframe id="viewer"></iframe>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  {id:'outline',n:1,name:'改编大纲',skill:'novel-outline'},
+  {id:'characters',n:2,name:'角色设定',skill:'novel-characters'},
+  {id:'art',n:3,name:'美术设定',skill:'novel-art'},
+  {id:'script',n:4,name:'剧本',skill:'novel-script'},
+  {id:'storyboard',n:5,name:'分镜',skill:'novel-storyboard'},
+];
+let cur = null, pollTimer = null, curLog = null, pollAttempts = 0;
+
+const $ = s => document.querySelector(s);
+
+async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+
+async function refresh(){
+  const data = await api('/api/steps');
+  // agent 状态
+  $('#agentTag').textContent = data.agent ? `agent: ${data.agent}` : '未检测到 claude / codex';
+  $('#agentTag').style.color = data.agent ? 'var(--gold)' : '#e08a7f';
+  // 项目下拉
+  const sel = $('#projSel');
+  const names = data.projects.map(p => p.name);
+  if (!names.includes(cur)) cur = names[names.length-1] || null;
+  sel.innerHTML = names.map(n => `<option ${n===cur?'selected':''}>${n}</option>`).join('');
+  if (!names.length){ $('#steps').innerHTML = '<div class="hint">还没有项目。先在上面粘贴一本小说创建。</div>'; return; }
+  const proj = data.projects.find(p => p.name === cur);
+  if (!proj) return;
+  // 步骤卡片
+  $('#steps').innerHTML = STEPS.map(s => {
+    const st = proj.states[s.id];
+    const label = {ready:'可运行',running:'运行中',done:'已完成',locked:'未解锁',busy:'等待中'}[st];
+    const lock = st==='locked' && proj.lockReason ? ` <span class="lock">${proj.lockReason}</span>` : '';
+    return `<div class="step ${st}" id="step-${s.id}">
+      <div class="no">${s.n}</div>
+      <div class="info"><b>${s.name}</b><small>${s.skill}</small>${lock}</div>
+      <div class="actions"><span class="state ${st}">${label}</span>
+        <button class="btn btn-gold btn-run" data-step="${s.id}" ${(st==='ready')?'':'disabled'}>运行</button>
+      </div></div>`;
+  }).join('');
+  document.querySelectorAll('.btn-run').forEach(b => b.onclick = () => run(b.dataset.step));
+  // 产物链接
+  const reports = proj.files.filter(f => f.endsWith('-report.html') || f === 'report.html');
+  $('#outputs').innerHTML = reports.map(f =>
+    `<a class="out-link" href="#" onclick="view('${encodeURIComponent(f)}');return false">📄 ${f}</a>`).join('') +
+    (proj.files.some(f=>f.endsWith('.json')) && !reports.includes('report.html')
+      ? ` <a class="out-link" href="#" onclick="assemble();return false">🧩 合成单页报告</a>` : '');
+}
+$('#projSel').onchange = e => { cur = e.target.value; $('#console').style.display='none'; $('#viewer').style.display='none'; refresh(); };
+
+async function create(){
+  $('#createErr').textContent = '';
+  const r = await api('/api/project', {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name: $('#novelName').value, novel: $('#novelText').value})});
+  if (r.error){ $('#createErr').textContent = r.error; return; }
+  $('#novelName').value=''; $('#novelText').value='';
+  cur = r.name; refresh();
+}
+$('#createBtn').onclick = create;
+
+async function run(step){
+  $('#console').style.display = 'block';
+  $('#console').textContent = '启动中…\n';
+  curLog = `${cur}/${step}`;
+  pollAttempts = 0;
+  const r = await api('/api/run', {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({project: cur, step, agent: $('#agent').value})});
+  if (r.error){ $('#console').textContent = '❌ ' + r.error; return; }
+  pollLog();
+}
+async function pollLog(){
+  if (!curLog) return;
+  const [project, step] = curLog.split('/');
+  const r = await api(`/api/log?project=${encodeURIComponent(project)}&step=${encodeURIComponent(step)}`);
+  const c = $('#console');
+  c.textContent = r.lines.join('\n') || '启动中…(正在检测本机 agent CLI)';
+  c.scrollTop = c.scrollHeight;
+  pollAttempts++;
+  if (r.running || (!r.finished && pollAttempts < 600)){
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(pollLog, 2000);   // 每 2 秒轮询;agent 检测期间也持续轮
+  } else {
+    refresh();
+  }
+}
+async function assemble(){
+  const r = await api('/api/assemble', {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({project: cur})});
+  if (r.ok){ view('report.html'); refresh(); }
+  else alert('合成失败:\n' + (r.output || r.error || ''));
+}
+function view(file){
+  const v = $('#viewer');
+  v.src = `/ws/${encodeURIComponent(cur)}/${file}`;
+  v.style.display = 'block';
+  v.scrollIntoView({behavior:'smooth'});
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

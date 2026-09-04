@@ -30,3 +30,6 @@ node_modules/
 
 # 本地嵌套的仓库克隆（内容已由外层仓库发布）
 supreme-bassoon/
+
+# 工作台的项目工作区（用户自己的小说与产物）
+workspaces/
