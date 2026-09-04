@@ -94,9 +94,9 @@ textarea{width:100%;min-height:130px;resize:vertical;font-size:13.5px}
     <div class="row">
       <input id="novelName" placeholder="项目名(选文件后自动填入,可改)">
       <select id="agent">
-        <option value="auto">自动选择 CLI</option>
-        <option value="claude">强制 Claude Code</option>
-        <option value="codex">强制 Codex</option>
+        <option value="auto">自动选择 CLI(推荐)</option>
+        <option value="claude">Claude Code(GLM,当前可用)</option>
+        <option value="codex">Codex(ChatGPT,需 Plus 额度)</option>
       </select>
       <button class="btn btn-gold" id="createBtn">创建项目</button>
     </div>
@@ -149,7 +149,7 @@ async function refresh(){
   $('#steps').innerHTML = STEPS.map(s => {
     const st = proj.states[s.id];
     const label = {ready:'可运行',running:'运行中',done:'已完成',locked:'未解锁',busy:'等待中'}[st];
-    const lock = st==='locked' && proj.lockReason ? ` <span class="lock">${proj.lockReason}</span>` : '';
+    const lock = st==='locked' && proj.reasons && proj.reasons[s.id] ? ` <span class="lock">${proj.reasons[s.id]}</span>` : '';
     return `<div class="step ${st}" id="step-${s.id}">
       <div class="no">${s.n}</div>
       <div class="info"><b>${s.name}</b><small>${s.skill}</small>${lock}</div>

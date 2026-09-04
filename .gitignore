@@ -33,3 +33,7 @@ supreme-bassoon/
 
 # 工作台的项目工作区（用户自己的小说与产物）
 workspaces/
+
+# 工作台服务日志
+app/server.log
+app/server.err.log

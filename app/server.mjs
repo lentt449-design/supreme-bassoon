@@ -49,7 +49,7 @@ const STEPS = [
   { id: 'storyboard', n: 5, name: '分镜',     skill: 'novel-storyboard', done: f => f.some(x => x.endsWith('-storyboard.json')) },
 ];
 const PREREQ = {
-  outline:    () => null,
+  outline:    files => files.includes('novel.txt') ? null : '项目里还没有小说(novel.txt),请先创建项目并导入 TXT',
   characters: files => files.some(x => x.endsWith('-outline.json')) ? null : '需要先完成第 1 步(改编大纲)',
   art:        files => files.some(x => x.endsWith('-outline.json')) ? null : '需要先完成第 1 步(改编大纲)',
   script:     files => files.some(x => x.endsWith('-outline.json')) ? null : '需要先完成第 1 步(改编大纲)',
@@ -136,6 +136,7 @@ function runStep(project, stepId, agentPref, cb) {
     log(project, stepId, `(工作目录: ${dir})`);
     const proc = spawn(agent, args, { cwd: dir, shell: true });
     job = { project, step: stepId, proc, startedAt: Date.now() };
+    try { proc.stdin.end(); } catch {} // 关闭 stdin,避免 codex exec 卡在 "Reading additional input from stdin..."
     proc.stdout.on('data', d => d.toString().split(/\r?\n/).forEach(l => l && log(project, stepId, l)));
     proc.stderr.on('data', d => d.toString().split(/\r?\n/).forEach(l => l && log(project, stepId, '[stderr] ' + l)));
     proc.on('error', e => { job = null; log(project, stepId, '[启动失败] ' + e.message); cb(e); });
@@ -189,7 +190,7 @@ const server = http.createServer(async (req, res) => {
         name,
         files: listFiles(name),
         states: Object.fromEntries(STEPS.map(s => [s.id, stepState(name, s)])),
-        lockReason: PREREQ.outline(listFiles(name)),
+        reasons: Object.fromEntries(STEPS.map(s => [s.id, PREREQ[s.id](listFiles(name))])),
       })),
       running: job ? { project: job.project, step: job.step } : null,
     });
