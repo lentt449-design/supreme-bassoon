@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 短剧技能库 · 小说到分镜的生产线</title>
+<meta name="description" content="AI 短剧制作的 skill 集合:从一本小说到直接喂生成管线的制作素材——拆角色、排大纲、出场景与道具设定、写剧本、切分镜。">
+<style>
+:root{
+  --bg:#0b0906;
+  --bg-soft:#12100b;
+  --panel:#161209;
+  --line:rgba(217,184,119,.14);
+  --line-strong:rgba(217,184,119,.28);
+  --gold:#d9b877;
+  --gold-bright:#f0d9a8;
+  --gold-dim:#8f7b52;
+  --ink:#efe9dc;
+  --ink-dim:#a89e8a;
+  --ink-faint:#6e6553;
+  --serif:"Songti SC","Noto Serif SC","STSong",serif;
+  --sans:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"SF Mono","JetBrains Mono",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.7;
+  overflow-x:hidden;
+}
+::selection{background:rgba(217,184,119,.3)}
+
+/* ---------- ambient glow ---------- */
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 500px at 78% -10%, rgba(217,184,119,.09), transparent 60%),
+    radial-gradient(700px 400px at 8% 30%, rgba(217,184,119,.05), transparent 60%),
+    radial-gradient(1000px 600px at 50% 110%, rgba(217,184,119,.05), transparent 60%);
+}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(20px,4vw,48px);height:72px;
+  background:rgba(11,9,6,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.brand-mark{
+  width:38px;height:38px;border-radius:9px;
+  background:linear-gradient(135deg,#e8cd93,#b4924f);
+  color:#241a08;font-family:var(--serif);font-weight:900;font-size:20px;
+  display:grid;place-items:center;box-shadow:0 4px 18px rgba(217,184,119,.35);
+}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:.02em}
+.brand-sub{font-size:10px;color:var(--gold-dim);letter-spacing:.28em;text-transform:uppercase;display:block;line-height:1.2}
+.nav-links{display:flex;gap:34px;align-items:center}
+.nav-links a{color:var(--ink-dim);text-decoration:none;font-size:14px;transition:color .2s}
+.nav-links a:hover{color:var(--gold-bright)}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 22px;border-radius:999px;font-size:14px;
+  text-decoration:none;transition:all .25s;cursor:pointer;border:1px solid transparent;
+}
+.btn-gold{background:linear-gradient(135deg,#e8cd93,#c5a05e);color:#241a08;font-weight:700}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(217,184,119,.35)}
+.btn-ghost{border-color:var(--line-strong);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright)}
+
+/* ---------- layout ---------- */
+main{position:relative;z-index:1}
+section{padding:clamp(72px,9vw,130px) clamp(20px,4vw,48px);max-width:1240px;margin:0 auto}
+.kicker{
+  color:var(--gold);font-family:var(--mono);font-size:12px;
+  letter-spacing:.34em;text-transform:uppercase;margin-bottom:22px;
+}
+h2{
+  font-family:var(--serif);font-weight:600;
+  font-size:clamp(30px,4vw,46px);line-height:1.28;margin-bottom:16px;
+}
+h2 em{font-style:normal;color:var(--gold-bright)}
+.sec-desc{color:var(--ink-dim);max-width:640px;font-size:15.5px}
+
+/* ---------- hero ---------- */
+.hero{
+  min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;
+  gap:clamp(32px,5vw,72px);align-items:center;
+  max-width:1240px;margin:0 auto;padding:120px clamp(20px,4vw,48px) 60px;
+}
+.hero h1{
+  font-family:var(--serif);font-weight:600;
+  font-size:clamp(40px,5.4vw,68px);line-height:1.22;margin-bottom:26px;
+}
+.hero h1 .gold{color:var(--gold-bright)}
+.hero p{color:var(--ink-dim);font-size:16px;max-width:520px;margin-bottom:30px}
+.hero-chips{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:38px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--line-strong);border-radius:999px;
+  padding:8px 18px;font-size:13px;color:var(--ink);
+}
+.chip svg{width:15px;height:15px;stroke:var(--gold);flex:none}
+.hero-ctas{display:flex;gap:16px;flex-wrap:wrap}
+.hero-foot{margin-top:46px;font-family:var(--mono);font-size:12px;color:var(--ink-faint);letter-spacing:.14em}
+
+/* hero mock window */
+.window{
+  background:var(--panel);border:1px solid var(--line-strong);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.4);
+}
+.window-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;border-bottom:1px solid var(--line);
+}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;background:#3a3122}
+.dots i:first-child{background:#c4554d}.dots i:nth-child(2){background:#c9a24b}.dots i:last-child{background:#5d9e62}
+.window-bar span{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--gold-dim);text-transform:uppercase}
+.window-body{position:relative}
+.window-body img{display:block;width:100%;height:auto}
+.window-caption{
+  padding:14px 18px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.12em;
+}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#69c17a;margin-right:8px;
+  box-shadow:0 0 8px #69c17a;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.4}}
+
+/* ---------- stats ---------- */
+.stats{
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  max-width:1240px;margin:0 auto;
+}
+.stat{padding:34px 24px;text-align:center;border-left:1px solid var(--line)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(30px,3.4vw,44px);color:var(--gold-bright);line-height:1.15}
+.stat span{font-size:12.5px;color:var(--ink-dim);letter-spacing:.1em}
+
+/* ---------- pipeline ---------- */
+.pipeline{display:grid;gap:14px;margin-top:52px}
+.step{
+  display:grid;grid-template-columns:74px 210px 1fr auto;gap:26px;align-items:center;
+  border:1px solid var(--line);border-radius:14px;padding:24px 28px;
+  background:linear-gradient(180deg,rgba(217,184,119,.028),transparent 70%);
+  transition:border-color .25s, transform .25s;
+}
+.step:hover{border-color:var(--gold-dim);transform:translateX(6px)}
+.step-no{font-family:var(--serif);font-size:34px;color:var(--gold-dim)}
+.step:hover .step-no{color:var(--gold-bright)}
+.step-name{font-weight:700;font-size:16.5px}
+.step-name small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--gold-dim);letter-spacing:.12em;margin-top:4px}
+.step-desc{color:var(--ink-dim);font-size:14px}
+.gate{
+  flex:none;font-family:var(--mono);font-size:12px;color:var(--gold);
+  border:1px solid var(--line-strong);border-radius:999px;padding:6px 15px;white-space:nowrap;
+}
+
+/* ---------- skills grid ---------- */
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px;margin-top:52px}
+.skill-card{
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  background:var(--panel);transition:transform .3s, border-color .3s;
+  display:flex;flex-direction:column;text-decoration:none;color:var(--ink);
+}
+.skill-card:hover{transform:translateY(-6px);border-color:var(--gold-dim)}
+.skill-shot{position:relative;border-bottom:1px solid var(--line);background:#0e0c08;overflow:hidden;aspect-ratio:16/9.6}
+.skill-shot img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;
+  opacity:.88;transition:transform .5s, opacity .3s;
+}
+.skill-card:hover .skill-shot img{transform:scale(1.04);opacity:1}
+.skill-body{padding:22px 24px 26px;display:flex;flex-direction:column;gap:10px;flex:1}
+.skill-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.skill-title h3{font-family:var(--mono);font-size:15px;color:var(--gold-bright);letter-spacing:.02em}
+.skill-title .gate{font-size:11px;padding:4px 11px}
+.skill-body p{color:var(--ink-dim);font-size:13.5px;flex:1}
+.skill-link{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.1em}
+
+/* ---------- report merger ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,4vw,60px);align-items:center;margin-top:50px}
+.duo h3{font-family:var(--serif);font-size:24px;margin-bottom:14px}
+.duo-list{list-style:none;display:grid;gap:14px;margin-top:22px}
+.duo-list li{display:flex;gap:14px;color:var(--ink-dim);font-size:14.5px}
+.duo-list b{color:var(--ink);font-weight:600}
+.duo-list .idx{color:var(--gold);font-family:var(--mono);font-size:12px;padding-top:3px}
+.code{
+  background:#0d0b07;border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
+}
+.code-head{
+  padding:11px 18px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--gold-dim);letter-spacing:.2em;
+  display:flex;justify-content:space-between;
+}
+.code pre{padding:22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.9;color:#d8cfb9}
+.code .c{color:#6e6553}.code .g{color:var(--gold-bright)}
+
+/* ---------- install ---------- */
+.install-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:46px}
+.install-card{border:1px solid var(--line);border-radius:14px;padding:28px;background:var(--panel)}
+.install-card h3{font-family:var(--serif);font-size:20px;margin-bottom:10px}
+.install-card p{color:var(--ink-dim);font-size:14px;margin-bottom:18px}
+.install-card .code{margin-top:4px}
+.install-card .code pre{padding:16px 18px;font-size:12.5px}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);margin-top:40px}
+.marquee{
+  overflow:hidden;white-space:nowrap;padding:30px 0;border-bottom:1px solid var(--line);
+}
+.marquee-inner{
+  display:inline-block;font-family:var(--mono);font-size:clamp(15px,2vw,22px);
+  letter-spacing:.42em;color:var(--gold-dim);text-transform:uppercase;
+  animation:scroll 34s linear infinite;
+}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.foot-body{
+  max-width:1240px;margin:0 auto;padding:44px clamp(20px,4vw,48px);
+  display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+}
+.foot-body p{color:var(--ink-faint);font-size:13px}
+.foot-body a{color:var(--gold);text-decoration:none}
+
+/* ---------- reveal ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s ease,transform .8s ease}
+.reveal.on{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:960px){
+  .hero{grid-template-columns:1fr;padding-top:110px}
+  .nav-links a:not(.btn){display:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat:nth-child(3){border-left:none}
+  .stat{border-top:1px solid var(--line)}
+  .stat:nth-child(-n+2){border-top:none}
+  .step{grid-template-columns:56px 1fr;grid-template-rows:auto auto}
+  .step-desc{grid-column:2}
+  .step .gate{grid-column:2;justify-self:start}
+  .duo{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<nav>
+  <a class="brand" href="#top">
+    <span class="brand-mark">剧</span>
+    <span>
+      <span class="brand-sub">Novel · Pipeline · Skills</span>
+      <span class="brand-name">AI 短剧技能库</span>
+    </span>
+  </a>
+  <div class="nav-links">
+    <a href="#pipeline">流水线</a>
+    <a href="#skills">五个 Skill</a>
+    <a href="#report">单页报告</a>
+    <a href="#install">安装</a>
+    <a class="btn btn-gold" href="#install">开始使用 →</a>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div>
+      <div class="kicker">Novel · AI 短剧制作 Skill 集合</div>
+      <h1>把一本小说,<br>变成你的<span class="gold">短剧生产线</span></h1>
+      <p>从一本小说到直接喂生成管线的制作素材——拆角色、排大纲、出场景与道具设定、写剧本、切分镜。给 AI 编码 agent 用,<b style="color:var(--ink)">Claude Code 和 codex 都能跑</b>。</p>
+      <div class="hero-chips">
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>零 npm 依赖</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>中英双语报告</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>52+ 道脚本质量门</span>
+        <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg>Claude Code &amp; Codex</span>
+      </div>
+      <div class="hero-ctas">
+        <a class="btn btn-gold" href="#pipeline">查看流水线 →</a>
+        <a class="btn btn-ghost" href="#install">开始安装</a>
+      </div>
+      <div class="hero-foot">Node ≥ 18 · 自测 1 秒 · 你的小说,你的管线</div>
+    </div>
+
+    <div class="window reveal">
+      <div class="window-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span>Novel · Local Workspace</span>
+      </div>
+      <div class="window-body">
+        <img src="skills/novel-storyboard/assets/report.webp" alt="分镜报告预览">
+      </div>
+      <div class="window-caption">
+        <span><i class="live-dot"></i>真实工作台画面 · novel-storyboard 报告</span>
+        <span>小说 → 大纲 → 剧本 → 分镜</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ STATS ============ -->
+  <div class="stats reveal">
+    <div class="stat"><b>5</b><span>个自包含 Skill</span></div>
+    <div class="stat"><b>52+</b><span>道脚本质量门</span></div>
+    <div class="stat"><b>2</b><span>种报告语言</span></div>
+    <div class="stat"><b>0</b><span>个 npm 依赖</span></div>
+  </div>
+
+  <!-- ============ PIPELINE ============ -->
+  <section id="pipeline">
+    <div class="kicker reveal">Novel · Pipeline</div>
+    <h2 class="reveal">五段流水线,<em>一条线跑到底</em></h2>
+    <p class="sec-desc reveal">改编大纲收敛结构,剧本、场景、角色三者同步迭代,分镜只做输出不做新决定。</p>
+
+    <div class="pipeline">
+      <div class="step reveal">
+        <div class="step-no">01</div>
+        <div class="step-name">改编大纲<small>NOVEL-OUTLINE</small></div>
+        <div class="step-desc">把小说改编成短剧大纲五件套:改编说明、人物表、爽点表、分集梗概、资产清单(含叙事道具表),支持已有大纲的体检模式。</div>
+        <span class="gate">14 道质量门</span>
+      </div>
+      <div class="step reveal">
+        <div class="step-no">02</div>
+        <div class="step-name">角色设定<small>NOVEL-CHARACTERS</small></div>
+        <div class="step-desc">把大纲定下的角色做成角色设定集:人物画像、形象提示词、音色提示词、角色设定图,吃 outline.json 预填角色表。</div>
+        <span class="gate">脚本检查</span>
+      </div>
+      <div class="step reveal">
+        <div class="step-no">03</div>
+        <div class="step-name">美术设定<small>NOVEL-ART</small></div>
+        <div class="step-desc">出场景 + 叙事道具的美术设定集:一致性锚点、光照与状态变体、尺度参照、无人无手白底提示词。</div>
+        <span class="gate">11 道质量门</span>
+      </div>
+      <div class="step reveal">
+        <div class="step-no">04</div>
+        <div class="step-name">剧本<small>NOVEL-SCRIPT</small></div>
+        <div class="step-desc">场次 + 节拍流,逐集时长按语速确定性折算,台词本按角色聚合带音色提示词,直接对接 TTS。</div>
+        <span class="gate">10 道质量门</span>
+      </div>
+      <div class="step reveal">
+        <div class="step-no">05</div>
+        <div class="step-name">分镜<small>NOVEL-STORYBOARD</small></div>
+        <div class="step-desc">段(≤15 秒)→ 分镜(2–5 秒硬门)→ 分镜图,H3 提示词逐字对账,export 一键出投产包。</div>
+        <span class="gate">17 道质量门</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SKILLS ============ -->
+  <section id="skills">
+    <div class="kicker reveal">Novel · Workspace</div>
+    <h2 class="reveal">每个 skill,<em>都出一份能看的报告</em></h2>
+    <p class="sec-desc reveal">丢一本小说进去,出这五套。点击卡片直达对应目录。</p>
+
+    <div class="skills-grid">
+      <a class="skill-card reveal" href="skills/novel-outline/">
+        <div class="skill-shot"><img src="skills/novel-outline/assets/report.webp" alt="改编大纲报告" loading="lazy"></div>
+        <div class="skill-body">
+          <div class="skill-title"><h3>novel-outline</h3><span class="gate">14 门</span></div>
+          <p>短剧改编大纲五件套,全部质量门脚本检查,支持体检模式。</p>
+          <span class="skill-link">查看 skill →</span>
+        </div>
+      </a>
+      <a class="skill-card reveal" href="skills/novel-characters/">
+        <div class="skill-shot"><img src="skills/novel-characters/assets/report.webp" alt="角色设定集报告" loading="lazy"></div>
+        <div class="skill-body">
+          <div class="skill-title"><h3>novel-characters</h3><span class="gate">设定集</span></div>
+          <p>人物画像、形象提示词、音色提示词、角色设定图,报告语言与出图风格可选。</p>
+          <span class="skill-link">查看 skill →</span>
+        </div>
+      </a>
+      <a class="skill-card reveal" href="skills/novel-art/">
+        <div class="skill-shot"><img src="skills/novel-art/assets/report.webp" alt="美术设定集报告" loading="lazy"></div>
+        <div class="skill-body">
+          <div class="skill-title"><h3>novel-art</h3><span class="gate">11 门</span></div>
+          <p>场景 + 叙事道具美术设定集,一致性锚点与状态变体。</p>
+          <span class="skill-link">查看 skill →</span>
+        </div>
+      </a>
+      <a class="skill-card reveal" href="skills/novel-script/">
+        <div class="skill-shot"><img src="skills/novel-script/assets/report.webp" alt="剧本报告" loading="lazy"></div>
+        <div class="skill-body">
+          <div class="skill-title"><h3>novel-script</h3><span class="gate">10 门</span></div>
+          <p>时长仪表 + 分集剧本 + 台词本,冷开场兑现是硬门,直连 TTS。</p>
+          <span class="skill-link">查看 skill →</span>
+        </div>
+      </a>
+      <a class="skill-card reveal" href="skills/novel-storyboard/">
+        <div class="skill-shot"><img src="skills/novel-storyboard/assets/report.webp" alt="分镜报告" loading="lazy"></div>
+        <div class="skill-body">
+          <div class="skill-title"><h3>novel-storyboard</h3><span class="gate">17 门</span></div>
+          <p>分镜节奏带 + 主/子分镜图 + H3 提示词,export 一键出投产包。</p>
+          <span class="skill-link">查看 skill →</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section id="report">
+    <div class="kicker reveal">Novel · Single Page</div>
+    <h2 class="reveal">五份报告,<em>合成一张单页</em></h2>
+
+    <div class="duo">
+      <div class="reveal">
+        <h3>组装器,不是独立 skill</h3>
+        <p class="sec-desc">不 import 任何 skill 的代码,而是调各自的 <code style="font-family:var(--mono);color:var(--gold)">render --html</code> 拿产物再拼装。五个 skill 一行不改、各自独立可跑。有哪几段就出哪几个面板,不报错。</p>
+        <ul class="duo-list">
+          <li><span class="idx">01</span><span><b>样式串味</b> — 五份报告 13 个同名不同义的类名,给每条选择器加作用域前缀。</span></li>
+          <li><span class="idx">02</span><span><b>脚本串味</b> — 每份脚本套一层作用域代理,五个导出按钮互不干扰。</span></li>
+          <li><span class="idx">03</span><span><b>图片路径</b> — 按输出文件位置重算相对路径,图不会静默变占位。</span></li>
+        </ul>
+      </div>
+      <div class="code reveal">
+        <div class="code-head"><span>terminal</span><span>bash</span></div>
+        <pre><span class="c"># 合成单页报告</span>
+<span class="g">node</span> scripts/report.mjs \
+  --from &lt;demo目录&gt; \
+  --out report.html
+
+<span class="c"># 只跑了角色一段?就只有一个面板</span>
+<span class="c"># 数字键 1–5 切面板,#pane-script 深链直达</span>
+
+<span class="c"># 92 项断言自测,不起浏览器</span>
+<span class="g">node</span> scripts/report-selftest.mjs</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INSTALL ============ -->
+  <section id="install">
+    <div class="kicker reveal">Novel · Install</div>
+    <h2 class="reveal">一条命令,<em>软链即装</em></h2>
+    <p class="sec-desc reveal">自动检测本机装了 Claude Code 还是 codex,软链过去——git pull 之后立刻生效,不用重装。</p>
+
+    <div class="install-grid">
+      <div class="install-card reveal">
+        <h3>克隆即用</h3>
+        <p>skill 的脚本只用标准库,没有 npm 依赖,不需要 install。</p>
+        <div class="code"><pre>git clone https://github.com/lentt449-design/supreme-bassoon.git
+cd supreme-bassoon
+./scripts/install.sh</pre></div>
+      </div>
+      <div class="install-card reveal">
+        <h3>按需安装</h3>
+        <p>只装某一个、只装到 codex、或取消软链。</p>
+        <div class="code"><pre>./scripts/install.sh novel-characters
+./scripts/install.sh --codex
+./scripts/install.sh --uninstall</pre></div>
+      </div>
+      <div class="install-card reveal">
+        <h3>跑一遍自测</h3>
+        <p>每个 skill 必带 selftest,不调模型、不花额度,1 秒跑完。</p>
+        <div class="code"><pre>for f in skills/*/scripts/selftest.mjs
+do
+  node "$f"
+done</pre></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="marquee">
+    <span class="marquee-inner">
+      Your Novel · Your Cast · Your Art · Your Script · Your Storyboard ·&nbsp;
+      Your Novel · Your Cast · Your Art · Your Script · Your Storyboard ·&nbsp;
+    </span>
+  </div>
+  <div class="foot-body">
+    <p><b style="color:var(--ink-dim)">AI 短剧技能库</b> — AI 短剧制作的 skill 集合 · Apache 2.0</p>
+    <p>本地运行 · 你的小说,你的管线 · <a href="#top">回到顶部 ↑</a></p>
+  </div>
+</footer>
+
+<script>
+// 滚动显现
+const io = new IntersectionObserver(es => {
+  es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } });
+}, { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// 导航锚点平滑补偏移
+document.querySelectorAll('.nav-links a[href^="#"]').forEach(a => {
+  a.addEventListener('click', ev => {
+    ev.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
