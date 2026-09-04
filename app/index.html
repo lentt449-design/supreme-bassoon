@@ -267,13 +267,13 @@ footer{
 .more{background:none;border:none;color:var(--gold);font-size:12px;cursor:pointer;padding:6px 0 0;font-family:inherit}
 
 /* 角色卡 */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.ccard{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel)}
-.ccard .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.ccard .nm{font-family:var(--serif);font-size:17px;color:var(--gold-bright)}
-.ccard .role{font-size:13px;color:var(--ink);margin-bottom:6px}
-.ccard .arc{font-size:12.5px;color:var(--ink-dim);margin-top:8px;line-height:1.8}
-.tier{font-family:var(--mono);font-size:10px;border-radius:6px;padding:2px 8px;letter-spacing:.1em}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ccard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
+.ccard .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px}
+.ccard .nm{font-family:var(--serif);font-size:15px;color:var(--gold-bright)}
+.ccard .role{font-size:12.5px;color:var(--ink);margin-bottom:3px}
+.ccard .arc{font-size:12px;color:var(--ink-dim);margin-top:6px;line-height:1.65}
+.tier{font-family:var(--mono);font-size:10px;border-radius:6px;padding:2px 8px;letter-spacing:.1em;flex:none}
 .tier.lead{color:#241a08;background:linear-gradient(135deg,#ecd193,#c5a05e)}
 .tier.support{color:var(--gold);border:1px solid var(--line-strong)}
 .tier.functional{color:var(--ink-faint);border:1px solid var(--line)}
@@ -565,7 +565,7 @@ const RENDER = {
       <div class="ccard">
         <div class="hd"><span class="nm">${esc(c.name)}</span><span class="tier ${esc(c.tier||'')}">${esc((c.tier||'').toUpperCase()||c.id||'')}</span></div>
         <div class="role">${esc(c.role)}</div>
-        ${c.arc?`<div class="arc"><b style="color:var(--gold-dim);font-size:11px;letter-spacing:.1em">人物弧光</b><br>${esc(c.arc)}</div>`:''}
+        ${c.arc?`<div class="arc"><span style="color:var(--gold-dim);letter-spacing:.08em">弧光 </span>${esc(c.arc)}</div>`:''}
       </div>`).join('')}</div>`;
   },
   art(json){
