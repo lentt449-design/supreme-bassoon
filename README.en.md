@@ -1,13 +1,6 @@
 [中文](README.md) · **English**
 
-> 👋 **Open to work / collaboration** — I'm between jobs right now, and this repo is what I build in that spare time.
-> Happy to hear from anyone this resonates with. Besides **remote work**, I'm also open to a **half-collaboration**: a few thousand RMB a month for living costs plus a profit share. On-site trips are possible where the work genuinely needs them. What I'm really after is finding people on the same wavelength to build something in this AI wave.
-> Email: **[eternityspring@gmail.com](mailto:eternityspring@gmail.com)** · Résumé: **[resume.79px.com](https://resume.79px.com)** · WeChat **`hao_dev`** (please mention `github` when you add me)
->
-> These skills are free and open source, built and battle-tested on real AI short-drama production.
-> If they save you an afternoon, consider [**buying me a coffee on Ko-fi**](https://ko-fi.com/eternityspring) ☕ — it keeps the updates coming.
-
-# shuohao-skills
+# supreme-bassoon
 
 **Agent skills for AI short-drama production** — from a novel to shoot-ready material: character bibles, adaptation outlines, scene & prop bibles, screenplays, storyboards. Built for AI coding agents, **runs in both Claude Code and codex**.
 
@@ -74,8 +67,8 @@ Point it at a novel and you get all five:
 ## Install
 
 ```bash
-git clone https://github.com/eternityspring/shuohao-skills.git
-cd shuohao-skills
+git clone https://github.com/lentt449-design/supreme-bassoon.git
+cd supreme-bassoon
 ./scripts/install.sh
 ```
 
