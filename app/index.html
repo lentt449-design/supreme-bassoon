@@ -343,6 +343,39 @@ footer{
 .btable td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink-dim);vertical-align:top;line-height:1.6}
 .btable tr:last-child td{border-bottom:none}
 .btable .mono{font-family:var(--mono);font-size:11px;color:var(--ink-faint);white-space:nowrap}
+
+/* 剧本页:分集侧栏 + 场次台词 */
+.script-grid{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start}
+@media (max-width:980px){.script-grid{grid-template-columns:1fr}}
+.ep-list{display:flex;flex-direction:column;gap:8px;position:sticky;top:86px;max-height:calc(100vh - 110px);overflow-y:auto;padding-right:4px}
+.ep-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--panel);transition:border-color .2s}
+.ep-item:hover{border-color:var(--line-strong)}
+.ep-item.on{border-color:var(--gold);background:rgba(217,184,119,.08)}
+.ep-item .ei-h{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--serif);font-size:14px;color:var(--ink)}
+.ep-item .ei-m{font-family:var(--mono);font-size:10px;color:var(--ink-faint);margin:5px 0;letter-spacing:.05em}
+.ep-item .ei-l{font-size:11px;color:var(--ink-dim);line-height:1.55;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-item .ei-l b{color:var(--gold);font-weight:600;margin-right:4px}
+.script-main{min-width:0}
+.ep-title{font-family:var(--serif);font-size:20px;margin-bottom:14px;display:flex;align-items:baseline;gap:12px}
+.ep-title .tg{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+.hook-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media (max-width:640px){.hook-cards{grid-template-columns:1fr}}
+.hook-card{border:1px solid var(--line-strong);border-left:3px solid var(--gold);border-radius:10px;padding:12px 14px;background:var(--panel)}
+.hook-card .lb{font-size:11px;color:var(--ink-faint);margin-bottom:6px;letter-spacing:.1em}
+.hook-card .tx{font-family:var(--serif);font-size:14.5px;line-height:1.65;color:var(--ink)}
+.claim-row{font-size:12.5px;color:var(--ink-dim);margin-bottom:16px}
+.scene-block{border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden;background:var(--panel)}
+.scene-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 14px;background:rgba(217,184,119,.05);border-bottom:1px solid var(--line)}
+.scene-h .sno{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+.scene-h .sid{font-family:var(--mono);font-size:11px;color:var(--gold)}
+.scene-h .snm{font-family:var(--serif);font-size:15px;color:var(--ink)}
+.scene-h .spacer{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.flow-row{display:flex;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.75}
+.flow-row:last-child{border-bottom:none}
+.flow-row .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);min-width:18px;padding-top:4px}
+.flow-row.action .c{color:var(--ink-dim)}
+.flow-row.line .sp{color:var(--gold);font-weight:600;min-width:52px;display:inline-block}
+.flow-row .dl{color:var(--ink-faint);font-style:italic;font-size:12px}
 </style>
 </head>
 <body>
@@ -459,7 +492,7 @@ const STEPS = [
   {id:'storyboard',n:5,name:'分镜',skill:'novel-storyboard',ic:'▣',file:'-storyboard.json'},
 ];
 let cur = null, pollTimer = null, curLog = null, pollAttempts = 0;
-let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null, artFilter = 'all';
+let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null, artFilter = 'all', scriptEp = 1;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
@@ -611,10 +644,16 @@ async function renderDetail(data){
     json = await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(file)}`);
   } catch(e){ pane.innerHTML = `<div class="jtree">产物解析失败:${e.message}</div>`; return; }
   const render = RENDER[dTab];
-  pane.innerHTML = render ? render(json, proj) : `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+  if (!render){
+    const raw = JSON.stringify(json, null, 2);
+    pane.innerHTML = `<div class="jtree">${esc(raw.length>150000 ? raw.slice(0,150000)+'\n\n…(数据过大已截断,请打开产物文件查看完整内容)' : raw)}</div>`;
+    return;
+  }
+  pane.innerHTML = await render(json, proj);
 }
-function setTab(t){ dTab = t; artFilter = 'all'; libFilter = 'all'; lastSig = null; refresh(); }
+function setTab(t){ dTab = t; artFilter = 'all'; libFilter = 'all'; scriptEp = 1; lastSig = null; refresh(); }
 function setArtFilter(f){ artFilter = f; lastSig = null; refresh(); }
+function selectEp(n){ scriptEp = n; lastSig = null; refresh(); }
 
 /* ---- 各阶段渲染器 ---- */
 function copyBtn(){
@@ -751,34 +790,76 @@ const RENDER = {
     };
     return tabs + (f!=='prop' ? scenes.map(sceneCard).join('') : '') + (f!=='scene' ? props.map(propCard).join('') : '');
   },
-  script(json, proj){
-    // 结构化剧本:适配 episodes[].scenes[].beats/lines 或通用
+  async script(json, proj){
+    // 加载 cast / art 做 ID→名字映射(C01→陈默,S01→场景名)
+    const load = async suf => {
+      const f = proj.files.find(x => x.endsWith(suf));
+      if (!f) return null;
+      return await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(f)}`).catch(()=>null);
+    };
+    const [outline, art] = await Promise.all([load('-outline.json'), load('-art.json')]);
+    const cname = id => {
+      const c = (outline && outline.characters || []).find(x => x.id === id || x.name === id);
+      return c ? c.name : id;
+    };
+    const sname = id => {
+      const s = (art && art.scenes || []).find(x => x.id === id);
+      return s ? s.name : '';
+    };
     const eps = json.episodes || [];
-    if (eps.length){
-      return eps.map(e => {
-        const title = e.title || `第 ${e.ep||e.episode||'?'} 集`;
-        const scenes = (e.scenes||[]).map(sc => {
-          const lines = (sc.lines || sc.beats || []).map((l,i) => {
-            if (typeof l === 'string') return `<div class="tagline"><span class="idchip">${i+1}</span><span class="txt">${esc(l)}</span></div>`;
-            const who = l.speaker || l.who || l.character || '';
-            const txt = l.text || l.line || l.content || l.action || '';
-            const dur = l.duration || l.dur || l.seconds ? `${l.duration||l.dur||l.seconds}s` : '';
-            return `<div class="tagline"><span class="idchip">${i+1}</span><span class="txt">${who?`<b style="color:var(--gold)">${esc(who)}</b> `:''}${esc(txt)}${dur?`<span style="color:var(--ink-faint);font-family:var(--mono);font-size:11px"> ${dur}</span>`:''}</span></div>`;
-          }).join('');
-          return `<div class="ep"><div class="ep-head"><span class="name">${esc(sc.id||'')} <b>${esc(sc.name||sc.scene||'')}</b></span>
-            ${(sc.characterIds||sc.characters||[]).length?`<div class="ep-ids">${(sc.characterIds||sc.characters||[]).map(c=>`<span class="idchip">${esc(typeof c==='string'?c:(c.id||c.name))}</span>`).join('')}</div>`:'<span></span>'}
-          </div>${lines}</div>`;
-        }).join('');
-        return `<div style="margin-bottom:24px"><div class="dhead"><div class="t"><h2 style="font-size:19px">${esc(title)}</h2></div>
-          ${e.duration?`<span class="chip">${esc(e.duration)}</span>`:''}</div>${scenes}</div>`;
-      }).join('');
-    }
-    return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+    if (!eps.length) return '<div class="emptybox"><div class="big">剧本里没有分集数据</div></div>';
+    const ep = eps.find(e => e.ep === scriptEp) || eps[0];
+    const epStats = e => {
+      const scenes = e.scenes || [];
+      const beats = scenes.reduce((n, s) => n + (s.flow || []).length, 0);
+      const lines = scenes.reduce((n, s) => n + (s.flow || []).filter(f => f.speaker).length, 0);
+      return { scenes: scenes.length, beats, lines };
+    };
+    const list = eps.map(e => {
+      const st = epStats(e);
+      return `<div class="ep-item ${e.ep===ep.ep?'on':''}" onclick="selectEp(${e.ep})">
+        <div class="ei-h"><span>第 ${e.ep} 集</span><span style="font-family:var(--mono);font-size:10px;color:var(--ink-faint)">${e.targetSeconds||'—'}s 目标</span></div>
+        <div class="ei-m">${st.scenes} 场 · ${st.beats} 节拍 · ${st.lines} 台词</div>
+        <div class="ei-l"><b>钩子</b>${esc(e.hook||'')}</div>
+        <div class="ei-l"><b>断点</b>${esc(e.cliff||'')}</div>
+      </div>`;
+    }).join('');
+    const scenes = (ep.scenes || []).map((s, si) => {
+      const rows = (s.flow || []).map((f, i) => f.action
+        ? `<div class="flow-row action"><span class="n">${i+1}</span><span class="c">${esc(f.action)}</span></div>`
+        : `<div class="flow-row line"><span class="n">${i+1}</span><span><span class="sp">${esc(cname(f.speaker))}</span>${esc(f.line||'')}${f.delivery?` <span class="dl">(${esc(f.delivery)})</span>`:''}</span></div>`
+      ).join('');
+      return `<div class="scene-block">
+        <div class="scene-h">
+          <span class="sno">场次 ${si+1}</span>
+          <span class="sid">${esc(s.sceneId||'')}</span>
+          <span class="snm">${esc(sname(s.sceneId))}</span>
+          ${s.lighting?`<span class="idchip">${esc(s.lighting)}</span>`:''}
+          <span class="spacer">
+            ${(s.characters||[]).map(c=>`<span class="idchip">${esc(cname(c))}</span>`).join('')}
+            ${(s.props||[]).map(p=>`<span class="idchip">${esc(p)}</span>`).join('')}
+          </span>
+        </div>
+        ${rows}
+      </div>`;
+    }).join('');
+    const st = epStats(ep);
+    return `<div class="script-grid">
+      <div class="ep-list">${list}</div>
+      <div class="script-main">
+        <div class="ep-title">剧本 / 第 ${ep.ep} 集 <span class="tg">${st.scenes} 场 · ${st.beats} 节拍 · ${st.lines} 台词 · 目标 ${ep.targetSeconds||'—'}s</span></div>
+        <div class="hook-cards">
+          <div class="hook-card"><div class="lb">钩子</div><div class="tx">${esc(ep.hook||'—')}</div></div>
+          <div class="hook-card"><div class="lb">断点</div><div class="tx">${esc(ep.cliff||'—')}</div></div>
+        </div>
+        ${ep.beatsClaimed?`<div class="claim-row">爽点认领:<span class="idchip" style="margin-left:6px">${esc(ep.beatsClaimed)}</span></div>`:''}
+        ${scenes || '<div class="emptybox"><div class="big">本集暂无场次数据</div></div>'}
+      </div>
+    </div>`;
   },
   storyboard(json){
-    const shots = json.shots || json.storyboard || json.episodes;
-    if (!shots) return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
-    return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+    const raw = JSON.stringify(json, null, 2);
+    return `<div class="jtree">${esc(raw.length>150000 ? raw.slice(0,150000)+'\n\n…(数据过大已截断,请打开产物文件查看完整内容)' : raw)}</div>`;
   },
 };
 
