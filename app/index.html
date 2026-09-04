@@ -85,9 +85,14 @@ textarea{width:100%;min-height:130px;resize:vertical;font-size:13.5px}
   <div class="sub">点「运行」后,后台会调用你本机的 Claude Code / codex 执行对应 skill。每步耗时几分钟到几十分钟,请保持本页打开。</div>
 
   <div class="card">
-    <h2>① 新建项目 — 粘贴小说</h2>
+    <h2>① 新建项目 — 选择小说 TXT</h2>
+    <div id="dropZone" style="border:1.5px dashed var(--line-strong);border-radius:11px;padding:22px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px">
+      <div style="font-size:15px;color:var(--gold-bright);margin-bottom:4px">点击选择 或 拖拽小说 TXT 到这里</div>
+      <div style="font-size:12px;color:var(--ink-faint)">自动读取书名(文件名)和全文,支持 GBK / UTF-8 编码</div>
+      <input type="file" id="novelFile" accept=".txt" style="display:none">
+    </div>
     <div class="row">
-      <input id="novelName" placeholder="项目名,如:渡口">
+      <input id="novelName" placeholder="项目名(选文件后自动填入,可改)">
       <select id="agent">
         <option value="auto">自动选择 CLI</option>
         <option value="claude">强制 Claude Code</option>
@@ -95,7 +100,7 @@ textarea{width:100%;min-height:130px;resize:vertical;font-size:13.5px}
       </select>
       <button class="btn btn-gold" id="createBtn">创建项目</button>
     </div>
-    <textarea id="novelText" placeholder="把小说全文粘贴到这里(至少 50 字)…"></textarea>
+    <textarea id="novelText" placeholder="也可以直接把小说全文粘贴到这里(至少 50 字)…"></textarea>
     <div class="err" id="createErr"></div>
   </div>
 
@@ -171,6 +176,35 @@ async function create(){
   cur = r.name; refresh();
 }
 $('#createBtn').onclick = create;
+
+// ---- TXT 文件导入:自动填项目名 + 内容,智能识别 GBK/UTF-8 编码 ----
+async function readFileSmart(file){
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  const utf8 = new TextDecoder('utf-8').decode(u8);
+  const bad = (utf8.match(/\uFFFD/g) || []).length;
+  if (bad === 0) return utf8;
+  try { return new TextDecoder('gb18030').decode(u8); } catch { return utf8; }
+}
+async function loadFile(file){
+  if (!file) return;
+  if (!/\.txt$/i.test(file.name)){ $('#createErr').textContent = '只支持 .txt 文件'; return; }
+  $('#createErr').textContent = '';
+  const text = await readFileSmart(file);
+  $('#novelText').value = text;
+  $('#novelName').value = file.name.replace(/\.txt$/i, '').trim();
+  const drop = $('#dropZone');
+  drop.style.borderColor = 'var(--gold)';
+  drop.querySelector('div').textContent = `已读取:${file.name}(${text.length.toLocaleString()} 字)`;
+}
+$('#dropZone').onclick = () => $('#novelFile').click();
+$('#novelFile').onchange = e => loadFile(e.target.files[0]);
+$('#dropZone').ondragover = e => { e.preventDefault(); $('#dropZone').style.borderColor = 'var(--gold)'; };
+$('#dropZone').ondragleave = () => { if (!$('#novelText').value) $('#dropZone').style.borderColor = 'var(--line-strong)'; };
+$('#dropZone').ondrop = e => {
+  e.preventDefault();
+  $('#dropZone').style.borderColor = 'var(--line-strong)';
+  if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+};
 
 async function run(step){
   $('#console').style.display = 'block';
