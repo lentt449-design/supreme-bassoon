@@ -196,6 +196,8 @@ footer{
 @media (max-width:980px){.dgrid{grid-template-columns:1fr}}
 .rail{display:flex;flex-direction:column;gap:6px;position:sticky;top:86px}
 @media (max-width:980px){.rail{flex-direction:row;flex-wrap:wrap;position:static}}
+.rail-sep{height:1px;background:var(--line);margin:8px 6px}
+@media (max-width:980px){.rail-sep{display:none}}
 .rail-btn{
   display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:12px;
   cursor:pointer;border:1px solid transparent;transition:all .2s;color:var(--ink-faint);
@@ -313,6 +315,34 @@ footer{
 .ftab.on{color:var(--gold-bright);border-color:var(--gold);background:rgba(217,184,119,.07)}
 .desc-lb{font-family:var(--mono);font-size:10px;color:var(--gold-dim);letter-spacing:.15em;margin-right:6px}
 .meta-row{font-size:12.5px;color:var(--ink-dim);margin-top:6px;line-height:1.7}
+
+/* 管线图 */
+.pipe-wrap{display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin:4px 0 10px}
+.pnode{border:1px solid var(--line-strong);border-radius:12px;padding:12px 16px;min-width:132px;background:var(--panel)}
+.pnode .pn-h{display:flex;gap:8px;align-items:baseline}
+.pnode .no{font-family:var(--mono);font-size:10px;color:var(--gold-dim)}
+.pnode .nm{font-family:var(--serif);font-size:16px;color:var(--ink)}
+.pnode .w{margin-left:auto;font-size:11px;color:var(--ink-faint);padding-left:10px}
+.pnode .pn-s{margin-top:6px;font-size:11.5px;color:var(--gold);font-family:var(--mono)}
+.pnode.dash{border-style:dashed}
+.pnode.dash .nm{color:var(--ink-faint)}
+.pnode.link{cursor:pointer;transition:border-color .2s,transform .2s}
+.pnode.link:hover{border-color:var(--gold);transform:translateY(-1px)}
+.pcol-wrap{border:1px dashed var(--line-strong);border-radius:14px;padding:10px}
+.conv-label{font-size:10.5px;color:var(--ink-faint);font-family:var(--mono);letter-spacing:.08em;margin-bottom:8px}
+.pcol{display:flex;flex-direction:column;gap:8px}
+.parrow{align-self:center;color:var(--gold-dim);font-size:15px}
+.pipe-foot{border-top:1px dashed var(--line);margin-top:4px;padding-top:12px;text-align:center;font-size:12px;color:var(--ink-faint);letter-spacing:.06em}
+
+/* 小节 + 爽点表 */
+.sec-h{font-family:var(--serif);font-size:16px;color:var(--gold);margin:22px 0 12px;display:flex;align-items:center;gap:8px}
+.sec-h .cnt{font-family:var(--mono);font-size:10.5px;color:var(--gold-dim);border:1px solid var(--line-strong);border-radius:8px;padding:1px 8px}
+.btable-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.btable{width:100%;border-collapse:collapse;font-size:12.5px}
+.btable th{font-family:var(--mono);font-size:10.5px;color:var(--gold-dim);letter-spacing:.1em;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+.btable td{padding:10px 12px;border-bottom:1px solid var(--line);color:var(--ink-dim);vertical-align:top;line-height:1.6}
+.btable tr:last-child td{border-bottom:none}
+.btable .mono{font-family:var(--mono);font-size:11px;color:var(--ink-faint);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -442,8 +472,15 @@ function goHome(){
   $('#crumb').classList.remove('show');
   refresh();
 }
+function defaultTab(proj){
+  if (!proj) return 'overview';
+  // 对齐 ReelBench:进入项目优先落在内容阶段(剧本优先),无产物则总览
+  for (const t of ['script','characters','art','outline']) if (proj.states[t]==='done') return t;
+  return 'overview';
+}
 function openProject(name){
-  cur = name; curView = 'detail'; dTab = 'overview'; lastSig = null;
+  cur = name; curView = 'detail'; lastSig = null;
+  dTab = defaultTab(dataCache && dataCache.projects ? dataCache.projects.find(p=>p.name===name) : null);
   $('#home').style.display = 'none';
   $('#detail').classList.add('show');
   $('#crumb').classList.add('show');
@@ -522,15 +559,23 @@ async function renderDetail(data){
   const proj = data.projects.find(p => p.name === cur);
   if (!proj) return goHome();
   $('#crumbName').textContent = cur;
-  // rail
+  // rail —— 对齐 ReelBench:阶段组(剧本/角色/美术/分镜) + 管理组(总览/大纲)
+  const railBtn = (id, ic, lb, st) => {
+    const cls = dTab===id ? 'on' : (st==='locked' ? 'lock' : '');
+    const stc = st==='done' ? 'done' : st==='running' ? 'run' : '';
+    const stepDef = STEPS.find(s=>s.id===id);
+    const locked = stepDef ? proj.states[id]==='locked' : false;
+    return `<div class="rail-btn ${cls}" onclick="${locked?'':`setTab('${id}')`}"><span class="ic">${ic}</span><span class="lb">${lb}</span><span class="st ${stc}"></span></div>`;
+  };
   $('#rail').innerHTML =
-    `<div class="rail-btn ${dTab==='overview'?'on':''}" onclick="setTab('overview')"><span class="ic">◈</span><span class="lb">概览</span><span class="st"></span></div>` +
-    STEPS.map(s => {
-      const st = proj.states[s.id];
-      const cls = dTab===s.id ? 'on' : (st==='locked' ? 'lock' : '');
-      const stc = st==='done' ? 'done' : st==='running' ? 'run' : '';
-      return `<div class="rail-btn ${cls}" onclick="${st==='locked'?'':`setTab('${s.id}')`}"><span class="ic">${s.ic}</span><span class="lb">${s.name}</span><span class="st ${stc}"></span></div>`;
-    }).join('');
+    railBtn('script','☰','剧本',proj.states.script) +
+    railBtn('characters','👤','角色',proj.states.characters) +
+    railBtn('art','🖼','美术',proj.states.art) +
+    railBtn('storyboard','▣','分镜',proj.states.storyboard) +
+    `<div class="rail-sep"></div>` +
+    railBtn('overview','▦','总览','') +
+    railBtn('outline','▤','大纲',proj.states.outline) +
+    railBtn('library','✦','素材库','');
   // head
   const KICKERS = {
     overview: 'PROJECT · 总览',
@@ -539,12 +584,13 @@ async function renderDetail(data){
     art: 'STAGE 03 · 在哪 · 拿什么 · ART',
     script: 'STAGE 04 · 发生什么 · SCRIPT',
     storyboard: 'STAGE 05 · 怎么拍 · STORYBOARD',
+    library: 'ASSETS · 出图提示词',
   };
-  const meta = dTab==='overview' ? {name:'总览'} : STEPS.find(s=>s.id===dTab);
+  const meta = ({overview:{name:'总览'},library:{name:'素材库'}})[dTab] || STEPS.find(s=>s.id===dTab);
   $('#dTitle').textContent = meta.name;
   $('#dKicker').textContent = `${cur} — ${KICKERS[dTab]}`;
   const st = proj.states[dTab];
-  $('#dOps').innerHTML = dTab==='overview' ? '' :
+  $('#dOps').innerHTML = (dTab==='overview'||dTab==='library') ? '' :
     `<span class="state ${st}">${{ready:'可运行',running:'运行中',done:'已完成',locked:'未解锁',busy:'等待中'}[st]}</span>` +
     (st==='ready' ? `<button class="btn btn-run" onclick="run('${dTab}')">运行这一步</button>` : '') +
     (st==='done' && proj.files.some(f=>f.endsWith(meta.file.replace('.json','-report.html'))) ?
@@ -553,6 +599,7 @@ async function renderDetail(data){
   const pane = $('#pane');
   pane.classList.remove('on'); void pane.offsetWidth; pane.classList.add('on');
   if (dTab === 'overview') return renderOverview(proj);
+  if (dTab === 'library') return renderLibrary(proj);
   const stepDef = STEPS.find(s=>s.id===dTab);
   const file = proj.files.find(f => f.endsWith(stepDef.file));
   if (!file){
@@ -566,7 +613,7 @@ async function renderDetail(data){
   const render = RENDER[dTab];
   pane.innerHTML = render ? render(json, proj) : `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
 }
-function setTab(t){ dTab = t; artFilter = 'all'; lastSig = null; refresh(); }
+function setTab(t){ dTab = t; artFilter = 'all'; libFilter = 'all'; lastSig = null; refresh(); }
 function setArtFilter(f){ artFilter = f; lastSig = null; refresh(); }
 
 /* ---- 各阶段渲染器 ---- */
@@ -603,6 +650,19 @@ function personaChips(arr){
 
 const RENDER = {
   outline(json){
+    const ad = json.adaptation || {};
+    const beats = json.beats || [];
+    const beatTable = beats.length ? `
+      <h4 class="sec-h">本剧爽点表 <span class="cnt">${beats.length}</span></h4>
+      <div class="btable-wrap"><table class="btable">
+        <thead><tr><th>#</th><th>类型</th><th>权重</th><th>集</th><th>铺垫</th><th>兑现</th></tr></thead>
+        <tbody>${beats.map(b=>`<tr>
+          <td class="mono">${esc(b.id)}</td><td>${esc(b.type)}</td>
+          <td><span class="tier ${/major|high/i.test(b.weight)?'lead':'functional'}">${esc((b.weight||'').toUpperCase())}</span></td>
+          <td class="mono">E${String(b.episode).padStart(2,'0')}</td>
+          <td>${esc(b.setup)}</td><td>${esc(b.payoff)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>` : '';
     const eps = (json.episodes||[]).map(e => `
       <div class="ep">
         <div class="ep-head">
@@ -611,6 +671,7 @@ const RENDER = {
         </div>
         <div class="tagline"><span class="tag">钩子</span><span class="txt">${esc(e.hook)}</span></div>
         <div class="tagline"><span class="tag dim">悬念</span><span class="txt">${esc(e.suspense)}</span></div>
+        ${e.crowdPlan?`<div class="tagline"><span class="tag dim">人群</span><span class="txt">${esc(e.crowdPlan)}</span></div>`:''}
         <div class="ep-ids">
           ${(e.sceneIds||[]).map(i=>`<span class="idchip sc">${esc(i)}</span>`).join('')}
           ${(e.characterIds||[]).map(i=>`<span class="idchip">${esc(i)}</span>`).join('')}
@@ -619,7 +680,9 @@ const RENDER = {
         <div class="syn" id="syn${e.ep}">${esc(e.synopsis)}</div>
         <button class="more" onclick="const s=document.getElementById('syn${e.ep}');s.classList.toggle('open');this.textContent=s.classList.contains('open')?'收起':'展开全文'">展开全文</button>
       </div>`).join('');
-    return eps || '<div class="emptybox"><div class="big">大纲里没有分集数据</div></div>';
+    return `${ad.core?`<div class="ov-core" style="margin-bottom:18px">${esc(ad.core)}</div>`:''}${beatTable}
+      <h4 class="sec-h">分集 <span class="cnt">${(json.episodes||[]).length}</span></h4>
+      ${eps || '<div class="emptybox"><div class="big">大纲里没有分集数据</div></div>'}`;
   },
   characters(json){
     const list = json.characters || [];
@@ -722,32 +785,96 @@ const RENDER = {
 /* ---- 概览 ---- */
 async function renderOverview(proj){
   const pane = $('#pane');
-  const file = proj.files.find(f => f.endsWith('-outline.json'));
-  if (!file){
+  const pick = suffix => proj.files.find(f => f.endsWith(suffix));
+  const load = async suf => {
+    const f = pick(suf);
+    if (!f) return null;
+    return await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(f)}`).catch(()=>null);
+  };
+  const [o, c, a, sc, sb] = await Promise.all([
+    load('-outline.json'), load('-cast.json'), load('-art.json'), load('-script.json'), load('-storyboard.json'),
+  ]);
+  if (!o && !c && !a){
     pane.innerHTML = `<div class="emptybox"><div class="big">还没有任何产物</div>先在首页把第 1 步「改编大纲」跑起来。</div>`;
     return;
   }
-  let j;
-  try { j = await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(file)}`); }
-  catch(e){ pane.innerHTML = `<div class="jtree">读取失败:${e.message}</div>`; return; }
-  const ad = j.adaptation || {};
-  const stats = [
-    {v:(j.episodes||[]).length, k:'EPISODES · 分集'},
-    {v:(j.characters||[]).length, k:'CHARACTERS · 角色'},
-    {v:(j.scenes||[]).length, k:'SCENES · 场景'},
-    {v:(j.props||[]).length, k:'PROPS · 道具'},
-  ];
+  const ad = (o && o.adaptation) || {};
+  const cnt = (x, k) => ((x && x[k]) || []).length;
+  const node = (no, nm, w, s, tab) => `
+    <div class="pnode ${tab?'link':'dash'}" ${tab?`onclick="setTab('${tab}')"`:''}>
+      <div class="pn-h"><span class="no">${no}</span><span class="nm">${nm}</span><span class="w">${w}</span></div>
+      <div class="pn-s">${s}</div>
+    </div>`;
+  const arrow = '<span class="parrow">→</span>';
+  const pipe = `
+    <div class="pipe-wrap">
+      ${node('','小说原文','素材来源', proj.files.some(f=>f==='novel.txt')?'已导入':'未导入','')}
+      ${arrow}
+      ${node('01','大纲','什么', o ? `${cnt(o,'episodes')} 集 · ${cnt(o,'beats')} 个爽点` : '待产出', o?'outline':'')}
+      ${arrow}
+      <div class="pcol-wrap">
+        <div class="conv-label">收敛层 · 三者同步迭代,无先后</div>
+        <div class="pcol">
+          ${node('02','角色','谁', (c||o) ? `${cnt(c,'characters')||cnt(o,'characters')} 人` : '待产出', (c||o)?'characters':'')}
+          ${node('03','美术','在哪 + 拿什么', (a||o) ? `${cnt(a,'scenes')||cnt(o,'scenes')} 场景 · ${cnt(a,'props')||cnt(o,'props')} 道具` : '待产出', (a||o)?'art':'')}
+          ${node('04','剧本','戏', sc ? `${cnt(sc,'scenes')||cnt(sc,'episodes')} 场` : '待产出', sc?'script':'')}
+        </div>
+      </div>
+      ${arrow}
+      ${node('05','分镜','怎么拍', sb ? '已产出' : '待产出', sb?'storyboard':'')}
+      ${arrow}
+      ${node('','批量生成','按镜出片','外部生图工具','')}
+    </div>
+    <div class="pipe-foot">人工过一遍 · 不满意就微调,重新生成</div>`;
   const col = (title, items, keys) => `<div class="ov-col"><h4>${title}</h4>${
     (items||[]).map(i => `<div class="ov-item"><div class="w">${esc(i[keys[0]])}</div>${i[keys[1]]?`<div class="y">${esc(i[keys[1]])}</div>`:''}${i[keys[2]]?`<div class="e">${esc(i[keys[2]])}</div>`:''}</div>`).join('') || '<div class="empty">无</div>'}</div>`;
   pane.innerHTML = `
-    <div class="ov-core">${esc(ad.core || j.logline || '—')}</div>
-    <div class="ov-stats">${stats.map(s=>`<div class="ov-stat"><div class="v">${s.v}</div><div class="k">${s.k}</div></div>`).join('')}</div>
+    <div class="ov-core">${esc(ad.core || o?.logline || '—')}</div>
+    ${pipe}
     <div class="ov-cols">
       ${col('保留 KEEP', ad.keep, ['what','why','evidence'])}
       ${col('裁剪 CUT', ad.cut, ['what','why'])}
       ${col('风险 RISKS', ad.risks, ['what','plan'])}
-    </div>
-    ${ad.cutNote?`<div class="syn" style="margin-top:16px;-webkit-line-clamp:unset">${esc(ad.cutNote)}</div>`:''}`;
+    </div>`;
+}
+
+/* ---- 素材库:聚合全部出图提示词 ---- */
+let libFilter = 'all';
+function setLibFilter(f){ libFilter = f; lastSig = null; refresh(); }
+async function renderLibrary(proj){
+  const pane = $('#pane');
+  const pick = suffix => proj.files.find(f => f.endsWith(suffix));
+  const load = async suf => {
+    const f = pick(suf);
+    if (!f) return null;
+    return await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(f)}`).catch(()=>null);
+  };
+  const [c, a] = await Promise.all([load('-cast.json'), load('-art.json')]);
+  const chars = (c && c.characters || []).map(x => ({ kind:'角色', nm:x.name, sub:x.oneLiner, img:x.image||{} }));
+  const scenes = (a && a.scenes || []).map(x => ({ kind:'场景', nm:x.name, sub:x.summary, img:x.image||{} }));
+  const props  = (a && a.props  || []).map(x => ({ kind:'道具', nm:x.name, sub:x.summary, img:x.image||{} }));
+  const all = [...chars, ...scenes, ...props];
+  if (!all.length){
+    pane.innerHTML = `<div class="emptybox"><div class="big">还没有可聚合的素材</div>先完成「角色」和「美术」两个阶段。</div>`;
+    return;
+  }
+  const shown = libFilter==='all' ? all : all.filter(x => x.kind===libFilter);
+  const tabs = `<div class="ftabs">
+    <button class="ftab ${libFilter==='all'?'on':''}" onclick="setLibFilter('all')">全部<b>${all.length}</b></button>
+    <button class="ftab ${libFilter==='角色'?'on':''}" onclick="setLibFilter('角色')">角色<b>${chars.length}</b></button>
+    <button class="ftab ${libFilter==='场景'?'on':''}" onclick="setLibFilter('场景')">场景<b>${scenes.length}</b></button>
+    <button class="ftab ${libFilter==='道具'?'on':''}" onclick="setLibFilter('道具')">道具<b>${props.length}</b></button>
+  </div>`;
+  const cards = shown.map(x => `
+    <div class="scard" style="padding:14px 16px">
+      <div class="hd"><span class="nm">${esc(x.nm)}</span><span class="idchip">${x.kind}</span></div>
+      ${x.sub?`<div class="meta-row">${esc(x.sub)}</div>`:''}
+      <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
+      ${pbox(x.img.promptLocal?'中文提示词':'提示词 PROMPT', x.img.promptLocal || x.img.prompt)}
+      ${pbox('英文提示词 EN', x.img.prompt)}
+      ${pbox('负面 NEGATIVE', x.img.negativePrompt)}
+    </div>`).join('');
+  pane.innerHTML = tabs + `<div class="cgrid">${cards}</div>`;
 }
 
 /* ============ 创建/文件导入 ============ */
