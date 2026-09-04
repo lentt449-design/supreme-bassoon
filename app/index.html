@@ -27,18 +27,22 @@ body{
 /* ===== 顶栏 ===== */
 header{
   position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
-  padding:16px 0;border-bottom:1px solid var(--line);
+  padding:14px 0;border-bottom:1px solid var(--line);
   background:rgba(11,9,6,.85);backdrop-filter:blur(12px);
 }
-.logo{display:flex;gap:12px;align-items:center}
+.logo{display:flex;gap:12px;align-items:center;cursor:pointer}
 .mark{
   width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
   background:linear-gradient(135deg,#ecd193,#b4924f);color:#241a08;
   font-family:var(--serif);font-weight:900;font-size:20px;
-  box-shadow:0 4px 18px rgba(217,184,119,.25);
+  box-shadow:0 4px 18px rgba(217,184,119,.25);flex:none;
 }
 .logo b{font-size:16.5px;letter-spacing:.02em;display:block;line-height:1.3}
 .logo small{display:block;font-family:var(--mono);font-size:9.5px;color:var(--gold-dim);letter-spacing:.3em}
+.crumb{display:none;align-items:center;gap:10px;margin-left:18px;padding-left:20px;border-left:1px solid var(--line)}
+.crumb.show{display:flex}
+.crumb .x{color:var(--ink-faint);font-size:15px;cursor:pointer}
+.crumb .pname{font-family:var(--serif);font-size:16px;color:var(--gold-bright)}
 .hright{display:flex;gap:10px;align-items:center}
 .chip{
   display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;
@@ -49,7 +53,7 @@ header{
 .chip.bad{color:var(--red)}
 .chip.bad .dot{background:var(--red)}
 
-/* ===== 标题区 ===== */
+/* ===== 首页 hero ===== */
 .hero{padding:34px 0 26px}
 .hero .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--gold-dim);margin-bottom:10px}
 .hero h1{font-family:var(--serif);font-size:30px;font-weight:600;letter-spacing:.01em}
@@ -90,7 +94,6 @@ input::placeholder,textarea::placeholder{color:var(--ink-faint)}
 textarea{min-height:96px;resize:vertical;font-size:13px;margin-top:12px}
 .frow{display:flex;gap:10px;margin-top:12px}
 .frow>*{min-width:0}
-.grow{flex:1}
 label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.15em;display:block;margin:12px 0 6px}
 .btn{
   display:inline-flex;justify-content:center;align-items:center;gap:8px;
@@ -104,6 +107,9 @@ label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);lette
   padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#ecd193,#c5a05e);
   color:#241a08;font-weight:700;width:auto;
 }
+.btn-run:disabled{opacity:.35;cursor:not-allowed}
+.btn-ghost{border-color:var(--line-strong);color:var(--ink);background:none;font-size:12.5px;padding:7px 16px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright)}
 .err{color:var(--red);font-size:12.5px;margin-top:10px;white-space:pre-wrap}
 
 /* ===== 项目列表 ===== */
@@ -113,8 +119,10 @@ label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);lette
 }
 .pitem:hover{border-color:var(--line-strong)}
 .pitem.on{border-color:var(--gold);background:rgba(217,184,119,.06)}
-.pitem .pname{font-family:var(--serif);font-size:15px;display:flex;justify-content:space-between;align-items:center}
-.pitem .pmeta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px}
+.pitem .pname{font-family:var(--serif);font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pitem .pmeta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px;display:flex;justify-content:space-between}
+.pitem .open{color:var(--gold);font-size:11px;opacity:0;transition:opacity .2s}
+.pitem:hover .open{opacity:1}
 .pdots{display:flex;gap:4px}
 .pdots i{width:6px;height:6px;border-radius:50%;background:rgba(217,184,119,.18)}
 .pdots i.on{background:var(--gold)}
@@ -123,20 +131,16 @@ label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);lette
 .empty{color:var(--ink-faint);font-size:13px;text-align:center;padding:18px 0}
 
 /* ===== 流水线 ===== */
-.pipeline{position:relative;padding-left:6px}
+.pipeline{position:relative}
 .step{
   position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:16px;align-items:center;
   padding:16px 18px;border:1px solid var(--line);border-radius:14px;margin-bottom:12px;
   background:var(--panel);transition:border .3s;
 }
 .step:last-child{margin-bottom:0}
-.step::before{
-  content:"";position:absolute;left:27px;top:-12px;width:1px;height:12px;background:var(--line);
-}
+.step::before{content:"";position:absolute;left:27px;top:-12px;width:1px;height:12px;background:var(--line)}
 .step:first-child::before{display:none}
-.step .no{
-  font-family:var(--serif);font-size:26px;color:rgba(217,184,119,.4);text-align:center;
-}
+.step .no{font-family:var(--serif);font-size:26px;color:rgba(217,184,119,.4);text-align:center}
 .step.done .no{color:var(--green)}
 .step.running{border-color:var(--gold);animation:glow 1.8s infinite}
 @keyframes glow{50%{box-shadow:0 0 26px rgba(217,184,119,.22)}}
@@ -153,9 +157,7 @@ label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);lette
 .state.done{color:var(--green);border-color:rgba(105,193,122,.4)}
 
 /* ===== 终端日志 ===== */
-.term{
-  background:#080704;border:1px solid var(--line);border-radius:12px;overflow:hidden;
-}
+.term{background:#080704;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .term-bar{
   display:flex;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);
   background:rgba(217,184,119,.03);
@@ -184,81 +186,211 @@ footer{
   margin-top:60px;padding:22px 0;border-top:1px solid var(--line);
   font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.3em;text-align:center;
 }
+
+/* ================================================== */
+/* ============ 项目详情视图(对标 ReelBench)========== */
+/* ================================================== */
+#detail{display:none}
+#detail.show{display:block}
+.dgrid{display:grid;grid-template-columns:76px 1fr;gap:20px;align-items:start;margin-top:24px}
+@media (max-width:980px){.dgrid{grid-template-columns:1fr}}
+.rail{display:flex;flex-direction:column;gap:6px;position:sticky;top:86px}
+@media (max-width:980px){.rail{flex-direction:row;flex-wrap:wrap;position:static}}
+.rail-btn{
+  display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:12px;
+  cursor:pointer;border:1px solid transparent;transition:all .2s;color:var(--ink-faint);
+}
+.rail-btn .ic{font-size:19px;line-height:1;filter:grayscale(1);opacity:.55}
+.rail-btn .lb{font-size:11.5px;letter-spacing:.08em}
+.rail-btn:hover{color:var(--ink-dim);background:rgba(217,184,119,.04)}
+.rail-btn.on{color:var(--gold-bright);border-color:var(--line-strong);background:rgba(217,184,119,.06)}
+.rail-btn.on .ic{filter:none;opacity:1}
+.rail-btn.lock{opacity:.45;cursor:default}
+.rail-btn .st{width:5px;height:5px;border-radius:50%;background:transparent}
+.rail-btn .st.done{background:var(--green)}
+.rail-btn .st.run{background:var(--gold-bright);animation:blink 1.2s infinite}
+
+.dcontent{min-width:0}
+.dhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.dhead .t{display:flex;align-items:baseline;gap:14px}
+.dhead .t h2{font-family:var(--serif);font-size:24px;font-weight:600}
+.dhead .t .sub{font-family:var(--mono);font-size:11px;color:var(--gold-dim);letter-spacing:.2em}
+.dhead .ops{display:flex;gap:10px}
+
+.pane{display:none}
+.pane.on{display:block}
+
+/* 概览 */
+.ov-core{
+  font-family:var(--serif);font-size:19px;line-height:1.9;color:var(--gold-bright);
+  border-left:3px solid var(--gold);padding:6px 0 6px 20px;margin-bottom:22px;
+}
+.ov-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:22px}
+.ov-stat{
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);
+}
+.ov-stat .v{font-family:var(--serif);font-size:26px;color:var(--gold-bright)}
+.ov-stat .k{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.15em;margin-top:2px}
+.ov-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.ov-col{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--panel)}
+.ov-col h4{font-family:var(--serif);font-size:14.5px;color:var(--gold);margin-bottom:10px}
+.ov-item{margin-bottom:10px}
+.ov-item .w{font-size:13px;color:var(--ink)}
+.ov-item .y{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.ov-item .e{font-size:12px;color:var(--ink-faint);margin-top:4px;border-left:2px solid var(--line);padding-left:10px}
+
+/* 分集列表(对标 ReelBench 分集侧栏) */
+.ep{
+  border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;
+  background:linear-gradient(180deg,rgba(217,184,119,.03),transparent 60%),var(--panel);
+}
+.ep:last-child{margin-bottom:0}
+.ep-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ep-head .name{font-family:var(--serif);font-size:17px;color:var(--ink)}
+.ep-head .name b{color:var(--gold-bright)}
+.ep-ids{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.idchip{
+  font-family:var(--mono);font-size:10.5px;color:var(--gold-dim);
+  border:1px solid var(--line);border-radius:6px;padding:2px 8px;
+}
+.idchip.sc{color:var(--gold)}
+.tagline{display:flex;gap:10px;margin-top:12px;align-items:flex-start}
+.tag{
+  flex:none;font-size:11px;font-weight:700;color:#241a08;border-radius:6px;padding:2px 9px;
+  background:linear-gradient(135deg,#ecd193,#c5a05e);letter-spacing:.1em;margin-top:2px;
+}
+.tag.dim{background:none;color:var(--gold-dim);border:1px solid var(--line-strong);font-weight:600}
+.tagline .txt{font-size:13.5px;color:var(--ink)}
+.syn{font-size:12.5px;color:var(--ink-dim);margin-top:12px;line-height:1.8;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.syn.open{-webkit-line-clamp:unset}
+.more{background:none;border:none;color:var(--gold);font-size:12px;cursor:pointer;padding:6px 0 0;font-family:inherit}
+
+/* 角色卡 */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.ccard{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel)}
+.ccard .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ccard .nm{font-family:var(--serif);font-size:17px;color:var(--gold-bright)}
+.ccard .role{font-size:13px;color:var(--ink);margin-bottom:6px}
+.ccard .arc{font-size:12.5px;color:var(--ink-dim);margin-top:8px;line-height:1.8}
+.tier{font-family:var(--mono);font-size:10px;border-radius:6px;padding:2px 8px;letter-spacing:.1em}
+.tier.lead{color:#241a08;background:linear-gradient(135deg,#ecd193,#c5a05e)}
+.tier.support{color:var(--gold);border:1px solid var(--line-strong)}
+.tier.functional{color:var(--ink-faint);border:1px solid var(--line)}
+
+/* 场景/道具 */
+.scard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);margin-bottom:10px}
+.scard .hd{display:flex;gap:10px;align-items:center;margin-bottom:4px}
+.scard .id{font-family:var(--mono);font-size:11px;color:var(--gold)}
+.scard .nm{font-size:14.5px;font-weight:600}
+.scard .plan{font-size:12.5px;color:var(--ink-dim);margin-top:4px}
+.primary-tag{font-size:10px;color:#241a08;background:var(--gold);border-radius:5px;padding:1px 7px;font-weight:700}
+
+.emptybox{
+  border:1px dashed var(--line-strong);border-radius:14px;padding:48px 20px;text-align:center;color:var(--ink-faint);
+}
+.emptybox .big{font-family:var(--serif);font-size:17px;color:var(--ink-dim);margin-bottom:8px}
+
+/* json 兜底树 */
+.jtree{font-family:var(--mono);font-size:12px;line-height:1.9;color:#cfc5ab;background:#080704;
+  border:1px solid var(--line);border-radius:12px;padding:18px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="logo">
-      <span class="mark">剧</span>
-      <span><b>AI 短剧工作台</b><small>LOCAL WORKBENCH</small></span>
+    <div style="display:flex;align-items:center">
+      <div class="logo" onclick="goHome()">
+        <span class="mark">剧</span>
+        <span><b>AI 短剧工作台</b><small>LOCAL WORKBENCH</small></span>
+      </div>
+      <div class="crumb" id="crumb">
+        <span class="x" onclick="goHome()">✕</span>
+        <span style="color:var(--ink-faint);font-size:12px">项目</span>
+        <span class="pname" id="crumbName"></span>
+      </div>
     </div>
     <div class="hright">
       <span class="chip" id="agentChip"><span class="dot"></span><span id="agentText">检测 agent 中…</span></span>
     </div>
   </header>
 
-  <div class="hero">
-    <div class="kicker">NOVEL → OUTLINE → CAST → ART → SCRIPT → STORYBOARD</div>
-    <h1>丢一本小说进来,<em>五步出投产素材</em></h1>
-    <p>点「运行」后,后台调用本机 Claude Code(GLM)逐段执行。每步耗时几分钟到几十分钟,模型长生成时日志会静默,状态为「运行中」即正常。</p>
-  </div>
-
-  <div class="grid">
-    <!-- ============ 左栏 ============ -->
-    <div class="col">
-      <div class="card">
-        <div class="card-title"><span class="no">01</span><h2>新建项目</h2><span class="ln"></span></div>
-        <div class="drop" id="dropZone">
-          <div class="big" id="dropBig">点击选择 或 拖拽小说 TXT</div>
-          <div class="sub">书名自动取文件名 · 支持 GBK / UTF-8</div>
-          <input type="file" id="novelFile" accept=".txt" style="display:none">
-        </div>
-        <label class="mini">项目名</label>
-        <input id="novelName" placeholder="选文件后自动填入,可改">
-        <label class="mini">改编规格</label>
-        <div class="frow">
-          <input id="epCount" type="number" value="10" min="1" max="300" placeholder="集数">
-          <span style="align-self:center;color:var(--ink-faint);font-size:12px">×</span>
-          <input id="epMin" type="number" value="3" step="0.5" min="0.5" max="30" placeholder="分钟">
-        </div>
-        <label class="mini">题材(留空 = AI 自动判断)</label>
-        <input id="genre" placeholder="如:末世求生 / 甜宠 / 逆袭">
-        <label class="mini">执行引擎</label>
-        <select id="agent">
-          <option value="auto">自动选择(推荐)</option>
-          <option value="claude">Claude Code(GLM,当前可用)</option>
-          <option value="codex">Codex(ChatGPT,需 Plus 额度)</option>
-        </select>
-        <div class="frow"><button class="btn btn-gold" id="createBtn">创建项目</button></div>
-        <div class="err" id="createErr"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><span class="no">02</span><h2>项目</h2><span class="ln"></span></div>
-        <div class="plist" id="plist"><div class="empty">还没有项目</div></div>
-      </div>
+  <!-- ================= 首页视图 ================= -->
+  <div id="home">
+    <div class="hero">
+      <div class="kicker">NOVEL → OUTLINE → CAST → ART → SCRIPT → STORYBOARD</div>
+      <h1>丢一本小说进来,<em>五步出投产素材</em></h1>
+      <p>点「运行」后,后台调用本机 Claude Code(GLM)逐段执行。每步耗时几分钟到几十分钟,模型长生成时日志会静默,状态为「运行中」即正常。点击项目卡可进入详情浏览。</p>
     </div>
 
-    <!-- ============ 右栏 ============ -->
-    <div class="col">
-      <div class="card">
-        <div class="card-title"><span class="no">03</span><h2>五段流水线</h2><span class="ln"></span></div>
-        <div class="pipeline" id="steps"><div class="empty">创建或选择一个项目后,这里点亮五步</div></div>
-      </div>
+    <div class="grid">
+      <div class="col">
+        <div class="card">
+          <div class="card-title"><span class="no">01</span><h2>新建项目</h2><span class="ln"></span></div>
+          <div class="drop" id="dropZone">
+            <div class="big" id="dropBig">点击选择 或 拖拽小说 TXT</div>
+            <div class="sub">书名自动取文件名 · 支持 GBK / UTF-8</div>
+            <input type="file" id="novelFile" accept=".txt" style="display:none">
+          </div>
+          <label class="mini">项目名</label>
+          <input id="novelName" placeholder="选文件后自动填入,可改">
+          <label class="mini">改编规格</label>
+          <div class="frow">
+            <input id="epCount" type="number" value="10" min="1" max="300" placeholder="集数">
+            <span style="align-self:center;color:var(--ink-faint);font-size:12px">×</span>
+            <input id="epMin" type="number" value="3" step="0.5" min="0.5" max="30" placeholder="分钟">
+          </div>
+          <label class="mini">题材(留空 = AI 自动判断)</label>
+          <input id="genre" placeholder="如:末世求生 / 甜宠 / 逆袭">
+          <label class="mini">执行引擎</label>
+          <select id="agent">
+            <option value="auto">自动选择(推荐)</option>
+            <option value="claude">Claude Code(GLM,当前可用)</option>
+            <option value="codex">Codex(ChatGPT,需 Plus 额度)</option>
+          </select>
+          <div class="frow"><button class="btn btn-gold" id="createBtn">创建项目</button></div>
+          <div class="err" id="createErr"></div>
+        </div>
 
-      <div class="card">
-        <div class="card-title"><span class="no">04</span><h2>运行日志</h2><span class="ln"></span></div>
-        <div class="term">
-          <div class="term-bar"><i></i><i></i><i></i><span id="termTitle">idle</span></div>
-          <div class="term-body" id="console"><span class="idle">等待任务…</span></div>
+        <div class="card">
+          <div class="card-title"><span class="no">02</span><h2>项目</h2><span class="ln"></span></div>
+          <div class="plist" id="plist"><div class="empty">还没有项目</div></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="no">05</span><h2>交付物</h2><span class="ln"></span></div>
-        <div class="arts" id="outputs"><span class="empty">流水线产出的报告会出现在这里</span></div>
-        <iframe class="viewer" id="viewer"></iframe>
+      <div class="col">
+        <div class="card">
+          <div class="card-title"><span class="no">03</span><h2>五段流水线</h2><span class="ln"></span></div>
+          <div class="pipeline" id="steps"><div class="empty">创建或选择一个项目后,这里点亮五步</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="no">04</span><h2>运行日志</h2><span class="ln"></span></div>
+          <div class="term">
+            <div class="term-bar"><i></i><i></i><i></i><span id="termTitle">idle</span></div>
+            <div class="term-body" id="console"><span class="idle">等待任务…</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="no">05</span><h2>交付物</h2><span class="ln"></span></div>
+          <div class="arts" id="outputs"><span class="empty">流水线产出的报告会出现在这里</span></div>
+          <iframe class="viewer" id="viewer"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 项目详情视图 ================= -->
+  <div id="detail">
+    <div class="dgrid">
+      <div class="rail" id="rail"></div>
+      <div class="dcontent">
+        <div class="dhead">
+          <div class="t"><h2 id="dTitle">概览</h2><span class="sub" id="dSub">OVERVIEW</span></div>
+          <div class="ops" id="dOps"></div>
+        </div>
+        <div class="pane" id="pane"></div>
       </div>
     </div>
   </div>
@@ -268,43 +400,71 @@ footer{
 
 <script>
 const STEPS = [
-  {id:'outline',n:1,name:'改编大纲',skill:'novel-outline'},
-  {id:'characters',n:2,name:'角色设定',skill:'novel-characters'},
-  {id:'art',n:3,name:'美术设定',skill:'novel-art'},
-  {id:'script',n:4,name:'剧本',skill:'novel-script'},
-  {id:'storyboard',n:5,name:'分镜',skill:'novel-storyboard'},
+  {id:'outline',n:1,name:'改编大纲',skill:'novel-outline',ic:'▦',file:'-outline.json'},
+  {id:'characters',n:2,name:'角色',skill:'novel-characters',ic:'👤',file:'-cast.json'},
+  {id:'art',n:3,name:'美术',skill:'novel-art',ic:'🖼',file:'-art.json'},
+  {id:'script',n:4,name:'剧本',skill:'novel-script',ic:'☰',file:'-script.json'},
+  {id:'storyboard',n:5,name:'分镜',skill:'novel-storyboard',ic:'▣',file:'-storyboard.json'},
 ];
 let cur = null, pollTimer = null, curLog = null, pollAttempts = 0;
+let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null;
 const $ = s => document.querySelector(s);
-const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+
+/* ============ 视图切换 ============ */
+function goHome(){
+  curView = 'home'; lastSig = null;
+  $('#home').style.display = 'block';
+  $('#detail').classList.remove('show');
+  $('#crumb').classList.remove('show');
+  refresh();
+}
+function openProject(name){
+  cur = name; curView = 'detail'; dTab = 'overview'; lastSig = null;
+  $('#home').style.display = 'none';
+  $('#detail').classList.add('show');
+  $('#crumb').classList.add('show');
+  $('#crumbName').textContent = name;
+  window.scrollTo({top:0});
+  refresh();
+}
 
 async function refresh(){
   const data = await api('/api/steps');
-  // agent 状态 chip
+  dataCache = data;
   const chip = $('#agentChip');
   if (data.agent){ chip.className = 'chip ok'; $('#agentText').textContent = 'agent · ' + data.agent; }
   else { chip.className = 'chip bad'; $('#agentText').textContent = '未检测到 claude / codex'; }
-
-  if (!data.projects.length) return;
-  if (!data.projects.find(p => p.name === cur)) cur = data.projects[data.projects.length-1].name;
-  renderProjects(data);
-  const proj = data.projects.find(p => p.name === cur);
-  if (proj) { renderSteps(proj, data.running); renderOutputs(proj); }
+  if (data.projects.length && !data.projects.find(p => p.name === cur)) cur = data.projects[data.projects.length-1].name;
+  // 脏检查:数据与视图状态都没变就不重渲染,避免轮询重建 DOM 吃掉点击
+  const sig = JSON.stringify([curView, dTab, cur, data.agent, data.running, data.projects]);
+  if (sig === lastSig) return;
+  lastSig = sig;
+  if (curView === 'home' && data.projects.length) renderHome(data);
+  if (curView === 'detail') renderDetail(data);
+  return data;
 }
 
-function renderProjects(data){
+/* ============ 首页渲染 ============ */
+function renderHome(data){
+  const proj = data.projects.find(p => p.name === cur);
+  // 项目列表
   $('#plist').innerHTML = data.projects.map(p => {
     const done = STEPS.filter(s => p.states[s.id] === 'done').length;
     const dots = STEPS.map(s => {
       const st = p.states[s.id];
       return `<i class="${st==='done'?'on':st==='running'?'run':''}"></i>`;
     }).join('');
-    return `<div class="pitem ${p.name===cur?'on':''}" onclick="selectProject('${esc(p.name).replace(/'/g,"\\'")}')">
+    return `<div class="pitem ${p.name===cur?'on':''}" onclick="openProject('${esc(p.name).replace(/'/g,"\\'")}')">
       <div class="pname"><span>${esc(p.name)}</span><span class="pdots">${dots}</span></div>
-      <div class="pmeta">${done}/5 完成 · ${p.files.length} 个文件</div>
+      <div class="pmeta"><span>${done}/5 · ${p.files.length} 文件</span><span class="open">进入详情 →</span></div>
     </div>`;
   }).join('');
+  if (proj){
+    renderSteps(proj, data.running);
+    renderOutputs(proj);
+  }
 }
 
 function renderSteps(proj, running){
@@ -319,11 +479,9 @@ function renderSteps(proj, running){
         <button class="btn btn-run" data-step="${s.id}" ${(st==='ready')?'':'disabled'}>运行</button>
       </div></div>`;
   }).join('');
-  document.querySelectorAll('.btn-run').forEach(b => b.onclick = () => run(b.dataset.step));
-  const r = data_running(running);
-  $('#termTitle').textContent = r ? `${r.project} · step ${r.step}` : (curLog ? curLog.replace('/', ' / ') : 'idle');
+  document.querySelectorAll('#steps .btn-run').forEach(b => b.onclick = () => run(b.dataset.step));
+  $('#termTitle').textContent = running ? `${running.project} · ${STEPS.find(s=>s.id===running.step).name}` : (curLog ? curLog.replace('/', ' / ') : 'idle');
 }
-function data_running(r){ return r; }
 
 function renderOutputs(proj){
   const reports = proj.files.filter(f => f.endsWith('-report.html') || f === 'report.html');
@@ -331,14 +489,164 @@ function renderOutputs(proj){
     $('#outputs').innerHTML = '<span class="empty">流水线产出的报告会出现在这里</span>';
     return;
   }
-  let html = reports.map(f => `<button class="art" onclick="view('${encodeURIComponent(f)}')">📄 ${esc(f)}</button>`).join('');
+  let html = reports.map(f => `<button class="art" onclick="viewFile('${encodeURIComponent(f)}')">📄 ${esc(f)}</button>`).join('');
   if (proj.files.some(f=>f.endsWith('.json')) && !reports.includes('report.html'))
     html += `<button class="art" onclick="assemble()">🧩 合成单页报告</button>`;
   $('#outputs').innerHTML = html;
 }
 
-function selectProject(name){ cur = name; curLog = null; $('#console').innerHTML = '<span class="idle">等待任务…</span>'; $('#viewer').style.display='none'; refresh(); }
+/* ============ 项目详情渲染 ============ */
+async function renderDetail(data){
+  const proj = data.projects.find(p => p.name === cur);
+  if (!proj) return goHome();
+  $('#crumbName').textContent = cur;
+  // rail
+  $('#rail').innerHTML =
+    `<div class="rail-btn ${dTab==='overview'?'on':''}" onclick="setTab('overview')"><span class="ic">◈</span><span class="lb">概览</span><span class="st"></span></div>` +
+    STEPS.map(s => {
+      const st = proj.states[s.id];
+      const cls = dTab===s.id ? 'on' : (st==='locked' ? 'lock' : '');
+      const stc = st==='done' ? 'done' : st==='running' ? 'run' : '';
+      return `<div class="rail-btn ${cls}" onclick="${st==='locked'?'':`setTab('${s.id}')`}"><span class="ic">${s.ic}</span><span class="lb">${s.name}</span><span class="st ${stc}"></span></div>`;
+    }).join('');
+  // head
+  const meta = dTab==='overview' ? {name:'概览',sub:'OVERVIEW'} : STEPS.find(s=>s.id===dTab);
+  $('#dTitle').textContent = cur + ' · ' + meta.name;
+  $('#dSub').textContent = meta.sub || meta.skill || '';
+  const st = proj.states[dTab];
+  $('#dOps').innerHTML = dTab==='overview' ? '' :
+    `<span class="state ${st}">${{ready:'可运行',running:'运行中',done:'已完成',locked:'未解锁',busy:'等待中'}[st]}</span>` +
+    (st==='ready' ? `<button class="btn btn-run" onclick="run('${dTab}')">运行这一步</button>` : '') +
+    (st==='done' && proj.files.some(f=>f.endsWith(meta.file.replace('.json','-report.html'))) ?
+      `<button class="btn btn-ghost" onclick="viewFile('${encodeURIComponent(proj.files.find(f=>f.endsWith(meta.file.replace('.json','-report.html'))))}')">查看报告</button>` : '');
+  // pane
+  const pane = $('#pane');
+  pane.classList.remove('on'); void pane.offsetWidth; pane.classList.add('on');
+  if (dTab === 'overview') return renderOverview(proj);
+  const stepDef = STEPS.find(s=>s.id===dTab);
+  const file = proj.files.find(f => f.endsWith(stepDef.file));
+  if (!file){
+    pane.innerHTML = `<div class="emptybox"><div class="big">这一步还没有产出</div>${st==='ready'?'点右上「运行这一步」开始生成。':esc(proj.reasons?.[dTab]||'等待前置步骤完成。')}</div>`;
+    return;
+  }
+  let json;
+  try {
+    json = await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(file)}`);
+  } catch(e){ pane.innerHTML = `<div class="jtree">产物解析失败:${e.message}</div>`; return; }
+  const render = RENDER[dTab];
+  pane.innerHTML = render ? render(json, proj) : `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+}
+function setTab(t){ dTab = t; lastSig = null; refresh(); }
 
+/* ---- 各阶段渲染器 ---- */
+const RENDER = {
+  outline(json){
+    const eps = (json.episodes||[]).map(e => `
+      <div class="ep">
+        <div class="ep-head">
+          <span class="name">第 <b>${e.ep}</b> 集</span>
+          <span class="pmeta" style="font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)">${(e.sceneIds||[]).length} 场 · ${(e.characterIds||[]).length} 角色${(e.warnings&&e.warnings.length)?' · ⚠ '+esc(e.warnings.join('/')):''}</span>
+        </div>
+        <div class="tagline"><span class="tag">钩子</span><span class="txt">${esc(e.hook)}</span></div>
+        <div class="tagline"><span class="tag dim">悬念</span><span class="txt">${esc(e.suspense)}</span></div>
+        <div class="ep-ids">
+          ${(e.sceneIds||[]).map(i=>`<span class="idchip sc">${esc(i)}</span>`).join('')}
+          ${(e.characterIds||[]).map(i=>`<span class="idchip">${esc(i)}</span>`).join('')}
+          ${(e.propIds||[]).map(i=>`<span class="idchip">${esc(i)}</span>`).join('')}
+        </div>
+        <div class="syn" id="syn${e.ep}">${esc(e.synopsis)}</div>
+        <button class="more" onclick="const s=document.getElementById('syn${e.ep}');s.classList.toggle('open');this.textContent=s.classList.contains('open')?'收起':'展开全文'">展开全文</button>
+      </div>`).join('');
+    return eps || '<div class="emptybox"><div class="big">大纲里没有分集数据</div></div>';
+  },
+  characters(json){
+    const list = json.characters || json.cast || [];
+    return `<div class="cgrid">${list.map(c => `
+      <div class="ccard">
+        <div class="hd"><span class="nm">${esc(c.name)}</span><span class="tier ${esc(c.tier||'')}">${esc((c.tier||'').toUpperCase()||c.id||'')}</span></div>
+        <div class="role">${esc(c.role)}</div>
+        ${c.arc?`<div class="arc"><b style="color:var(--gold-dim);font-size:11px;letter-spacing:.1em">人物弧光</b><br>${esc(c.arc)}</div>`:''}
+      </div>`).join('')}</div>`;
+  },
+  art(json){
+    const scenes = json.scenes || [];
+    const props = json.props || [];
+    const sHtml = scenes.map(s => `
+      <div class="scard">
+        <div class="hd"><span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>${s.primary?'<span class="primary-tag">主场景</span>':''}</div>
+        ${s.reusePlan?`<div class="plan">复用方案:${esc(s.reusePlan)}</div>`:''}
+      </div>`).join('');
+    const pHtml = props.map(p => `
+      <div class="scard">
+        <div class="hd"><span class="id">${esc(p.id)}</span><span class="nm">${esc(p.name)}</span></div>
+        ${p.usage?`<div class="plan">${esc(p.usage)}</div>`:''}
+      </div>`).join('');
+    return `<h4 style="font-family:var(--serif);color:var(--gold);margin-bottom:12px">场景 ${scenes.length}</h4>${sHtml}
+      ${props.length?`<h4 style="font-family:var(--serif);color:var(--gold);margin:20px 0 12px">叙事道具 ${props.length}</h4>${pHtml}`:''}`;
+  },
+  script(json, proj){
+    // 结构化剧本:适配 episodes[].scenes[].beats/lines 或通用
+    const eps = json.episodes || [];
+    if (eps.length){
+      return eps.map(e => {
+        const title = e.title || `第 ${e.ep||e.episode||'?'} 集`;
+        const scenes = (e.scenes||[]).map(sc => {
+          const lines = (sc.lines || sc.beats || []).map((l,i) => {
+            if (typeof l === 'string') return `<div class="tagline"><span class="idchip">${i+1}</span><span class="txt">${esc(l)}</span></div>`;
+            const who = l.speaker || l.who || l.character || '';
+            const txt = l.text || l.line || l.content || l.action || '';
+            const dur = l.duration || l.dur || l.seconds ? `${l.duration||l.dur||l.seconds}s` : '';
+            return `<div class="tagline"><span class="idchip">${i+1}</span><span class="txt">${who?`<b style="color:var(--gold)">${esc(who)}</b> `:''}${esc(txt)}${dur?`<span style="color:var(--ink-faint);font-family:var(--mono);font-size:11px"> ${dur}</span>`:''}</span></div>`;
+          }).join('');
+          return `<div class="ep"><div class="ep-head"><span class="name">${esc(sc.id||'')} <b>${esc(sc.name||sc.scene||'')}</b></span>
+            ${(sc.characterIds||sc.characters||[]).length?`<div class="ep-ids">${(sc.characterIds||sc.characters||[]).map(c=>`<span class="idchip">${esc(typeof c==='string'?c:(c.id||c.name))}</span>`).join('')}</div>`:'<span></span>'}
+          </div>${lines}</div>`;
+        }).join('');
+        return `<div style="margin-bottom:24px"><div class="dhead"><div class="t"><h2 style="font-size:19px">${esc(title)}</h2></div>
+          ${e.duration?`<span class="chip">${esc(e.duration)}</span>`:''}</div>${scenes}</div>`;
+      }).join('');
+    }
+    return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+  },
+  storyboard(json){
+    const shots = json.shots || json.storyboard || json.episodes;
+    if (!shots) return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+    return `<div class="jtree">${esc(JSON.stringify(json, null, 2))}</div>`;
+  },
+};
+
+/* ---- 概览 ---- */
+async function renderOverview(proj){
+  const pane = $('#pane');
+  const file = proj.files.find(f => f.endsWith('-outline.json'));
+  if (!file){
+    pane.innerHTML = `<div class="emptybox"><div class="big">还没有任何产物</div>先在首页把第 1 步「改编大纲」跑起来。</div>`;
+    return;
+  }
+  let j;
+  try { j = await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(file)}`); }
+  catch(e){ pane.innerHTML = `<div class="jtree">读取失败:${e.message}</div>`; return; }
+  const ad = j.adaptation || {};
+  const stats = [
+    {v:(j.episodes||[]).length, k:'EPISODES · 分集'},
+    {v:(j.characters||[]).length, k:'CHARACTERS · 角色'},
+    {v:(j.scenes||[]).length, k:'SCENES · 场景'},
+    {v:(j.props||[]).length, k:'PROPS · 道具'},
+  ];
+  const col = (title, items, keys) => `<div class="ov-col"><h4>${title}</h4>${
+    (items||[]).map(i => `<div class="ov-item"><div class="w">${esc(i[keys[0]])}</div>${i[keys[1]]?`<div class="y">${esc(i[keys[1]])}</div>`:''}${i[keys[2]]?`<div class="e">${esc(i[keys[2]])}</div>`:''}</div>`).join('') || '<div class="empty">无</div>'}</div>`;
+  pane.innerHTML = `
+    <div class="ov-core">${esc(ad.core || j.logline || '—')}</div>
+    <div class="ov-stats">${stats.map(s=>`<div class="ov-stat"><div class="v">${s.v}</div><div class="k">${s.k}</div></div>`).join('')}</div>
+    <div class="ov-cols">
+      ${col('保留 KEEP', ad.keep, ['what','why','evidence'])}
+      ${col('裁剪 CUT', ad.cut, ['what','why'])}
+      ${col('风险 RISKS', ad.risks, ['what','plan'])}
+    </div>
+    ${ad.cutNote?`<div class="syn" style="margin-top:16px;-webkit-line-clamp:unset">${esc(ad.cutNote)}</div>`:''}`;
+}
+
+/* ============ 创建/文件导入 ============ */
 async function create(){
   $('#createErr').textContent = '';
   const params = {
@@ -356,7 +664,6 @@ async function create(){
 }
 $('#createBtn').onclick = create;
 
-// ---- TXT 文件导入 ----
 async function readFileSmart(file){
   const u8 = new Uint8Array(await file.arrayBuffer());
   const utf8 = new TextDecoder('utf-8').decode(u8);
@@ -385,7 +692,7 @@ $('#dropZone').ondrop = e => {
   if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
 };
 
-// ---- 运行与轮询 ----
+/* ============ 运行与轮询 ============ */
 async function run(step){
   $('#console').textContent = '启动中…(正在拉起本机 agent CLI)\n';
   curLog = `${cur}/${step}`;
@@ -412,10 +719,10 @@ async function pollLog(){
 async function assemble(){
   const r = await api('/api/assemble', {method:'POST',headers:{'Content-Type':'application/json'},
     body: JSON.stringify({project: cur})});
-  if (r.ok){ view('report.html'); refresh(); }
+  if (r.ok){ viewFile('report.html'); refresh(); }
   else alert('合成失败:\n' + (r.output || r.error || ''));
 }
-function view(file){
+function viewFile(file){
   const v = $('#viewer');
   v.src = `/ws/${encodeURIComponent(cur)}/${file}`;
   v.style.display = 'block';
