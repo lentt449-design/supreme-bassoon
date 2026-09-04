@@ -4,10 +4,34 @@
  * 零依赖,只用 Node 标准库。启动:node app/server.mjs  → http://127.0.0.1:8788
  */
 import http from 'node:http';
+import net from 'node:net';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// 探测本机常见代理端口,命中则注入环境变量,供 codex/claude 子进程联网
+async function detectProxyPort() {
+  const ports = [7897, 7890, 10809, 1080];
+  for (const port of ports) {
+    const ok = await new Promise(resolve => {
+      const s = net.connect(port, '127.0.0.1');
+      s.once('connect', () => { s.destroy(); resolve(true); });
+      s.once('error', () => resolve(false));
+      s.setTimeout(800, () => { s.destroy(); resolve(false); });
+    });
+    if (ok) return port;
+  }
+  return null;
+}
+if (!process.env.HTTPS_PROXY) {
+  const port = await detectProxyPort();
+  if (port) {
+    process.env.HTTPS_PROXY = `http://127.0.0.1:${port}`;
+    process.env.HTTP_PROXY = process.env.HTTPS_PROXY;
+    console.log(`已启用本机代理 ${process.env.HTTPS_PROXY}(子进程联网使用)`);
+  }
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const APP_DIR = path.join(ROOT, 'app');
@@ -103,9 +127,11 @@ function runStep(project, stepId, agentPref, cb) {
     }
     lastFinish = null;
     const prompt = prompts[stepId](project);
+    // Windows 下 shell:true 不会自动给参数加引号,提示词含空格必须手动包裹
+    const quoted = `"${prompt}"`;
     const args = agent === 'claude'
-      ? ['-p', prompt, '--dangerously-skip-permissions']
-      : ['exec', '--full-auto', prompt];
+      ? ['-p', quoted, '--dangerously-skip-permissions']
+      : ['exec', '-s', 'workspace-write', '--skip-git-repo-check', quoted];
     log(project, stepId, `$ ${agent} ${args.join(' ')}`);
     log(project, stepId, `(工作目录: ${dir})`);
     const proc = spawn(agent, args, { cwd: dir, shell: true });
