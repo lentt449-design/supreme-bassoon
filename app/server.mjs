@@ -32,6 +32,8 @@ if (!process.env.HTTPS_PROXY) {
     console.log(`已启用本机代理 ${process.env.HTTPS_PROXY}(子进程联网使用)`);
   }
 }
+// 分镜等阶段会派生子代理并行编排,禁止 Claude Code 在 600s 后终止后台任务
+process.env.CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS = '0';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const APP_DIR = path.join(ROOT, 'app');
@@ -249,6 +251,45 @@ const server = http.createServer(async (req, res) => {
   if (p.startsWith('/ws/') && req.method === 'GET') {
     const rel = decodeURIComponent(p.slice(4)).replace(/\.\./g, '');
     return serveFile(res, path.join(WS_DIR, rel));
+  }
+  // 保存对产物 JSON 的字段级修改(写前自动备份到 backups/)
+  if (p === '/api/save' && req.method === 'POST') {
+    const { project, file, fpath, value } = JSON.parse(await readBody(req));
+    const dir = projectDir(project);
+    const safeFile = path.basename(file || '');
+    const filePath = path.join(dir, safeFile);
+    if (!safeFile.endsWith('.json') || !fs.existsSync(filePath)) return json(res, 400, { error: '文件不存在' });
+    // 路径白名单:只允许 字母数字/点/方括号,禁止原型污染
+    if (!/^[a-zA-Z0-9_.\[\]]+$/.test(fpath || '') || /(__proto__|constructor|prototype)/.test(fpath)) {
+      return json(res, 400, { error: '字段路径不合法' });
+    }
+    let data;
+    try { data = JSON.parse(fs.readFileSync(filePath, 'utf8')); }
+    catch { return json(res, 400, { error: '原文件 JSON 解析失败' }); }
+    const seg = fpath.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+    let node = data;
+    for (let i = 0; i < seg.length - 1; i++) {
+      const k = seg[i];
+      if (node[k] == null || typeof node[k] !== 'object') return json(res, 400, { error: `路径不存在:${seg.slice(0, i + 1).join('.')}` });
+      node = node[k];
+    }
+    const last = seg[seg.length - 1];
+    if (!(last in node)) return json(res, 400, { error: `字段不存在:${fpath}` });
+    // 备份
+    const bkDir = path.join(dir, 'backups');
+    fs.mkdirSync(bkDir, { recursive: true });
+    fs.copyFileSync(filePath, path.join(bkDir, `${safeFile}.${new Date().toISOString().replace(/[:.]/g, '-')}.bak`));
+    node[last] = value;
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    return json(res, 200, { ok: true });
+  }
+  // 删除整个项目目录
+  if (p === '/api/delete' && req.method === 'POST') {
+    const { project } = JSON.parse(await readBody(req));
+    const dir = path.join(WS_DIR, path.basename(project || ''));
+    if (!fs.existsSync(dir)) return json(res, 400, { error: '项目不存在' });
+    fs.rmSync(dir, { recursive: true, force: true });
+    return json(res, 200, { ok: true });
   }
 
   // 静态页面

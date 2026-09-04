@@ -120,7 +120,10 @@ label.mini{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);lette
 .pitem:hover{border-color:var(--line-strong)}
 .pitem.on{border-color:var(--gold);background:rgba(217,184,119,.06)}
 .pitem .pname{font-family:var(--serif);font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pitem .pmeta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px;display:flex;justify-content:space-between}
+.pitem .pmeta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:3px;display:flex;justify-content:space-between;align-items:center}
+.row-ops{display:flex;align-items:center;gap:10px}
+.pdel{color:var(--ink-faint);cursor:pointer;padding:2px 5px;border-radius:4px;font-size:12px;line-height:1}
+.pdel:hover{color:#e88d7f;background:rgba(232,141,127,.12)}
 .pitem .open{color:var(--gold);font-size:11px;opacity:0;transition:opacity .2s}
 .pitem:hover .open{opacity:1}
 .pdots{display:flex;gap:4px}
@@ -301,6 +304,14 @@ footer{
 .pbox-h{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;
   border-bottom:1px solid var(--line);background:rgba(217,184,119,.04)}
 .pbox-h .lb{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.15em}
+.pbox-ops{display:flex;gap:6px}
+.pedit{width:100%;background:#080704;border:1px solid var(--gold);border-radius:8px;color:var(--ink);
+  font:inherit;font-size:11.5px;line-height:1.7;padding:8px 10px;resize:vertical;box-sizing:border-box}
+.pedit-ops{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:99;
+  background:rgba(20,16,8,.96);border:1px solid var(--gold);color:var(--gold-bright);
+  padding:10px 22px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .copy{font-family:var(--mono);font-size:10.5px;color:var(--gold);background:none;border:1px solid var(--line-strong);
   border-radius:6px;padding:2px 10px;cursor:pointer}
 .copy:hover{border-color:var(--gold);color:var(--gold-bright)}
@@ -376,6 +387,24 @@ footer{
 .flow-row.action .c{color:var(--ink-dim)}
 .flow-row.line .sp{color:var(--gold);font-weight:600;min-width:52px;display:inline-block}
 .flow-row .dl{color:var(--ink-faint);font-style:italic;font-size:12px}
+.flow-row .editable{cursor:text;border-bottom:1px dashed transparent;border-radius:3px}
+.flow-row .editable:hover{border-bottom-color:var(--line-strong);background:rgba(217,184,119,.05)}
+.ltxt{margin-right:2px}
+
+/* 术语解释 */
+.term{border-bottom:1px dashed var(--gold-dim);cursor:help;position:relative}
+.term:hover::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:60;width:230px;
+  background:#17130b;border:1px solid var(--gold);border-radius:8px;padding:9px 11px;font-size:11.5px;
+  line-height:1.65;color:var(--ink);font-weight:normal;white-space:normal;pointer-events:none;
+  font-family:inherit;letter-spacing:0;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+
+/* 三步上手 */
+.guide{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 26px}
+@media (max-width:760px){.guide{grid-template-columns:1fr}}
+.gstep{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);display:flex;gap:12px;align-items:flex-start}
+.gstep .gn{font-family:var(--serif);font-size:22px;color:var(--gold);line-height:1}
+.gstep .gt{font-size:13.5px;color:var(--ink);font-weight:600;margin-bottom:3px}
+.gstep .gd{font-size:11.5px;color:var(--ink-faint);line-height:1.6}
 </style>
 </head>
 <body>
@@ -402,7 +431,13 @@ footer{
     <div class="hero">
       <div class="kicker">NOVEL → OUTLINE → CAST → ART → SCRIPT → STORYBOARD</div>
       <h1>丢一本小说进来,<em>五步出投产素材</em></h1>
-      <p>点「运行」后,后台调用本机 Claude Code(GLM)逐段执行。每步耗时几分钟到几十分钟,模型长生成时日志会静默,状态为「运行中」即正常。点击项目卡可进入详情浏览。</p>
+      <p>点「运行」后,后台调用本机 Claude Code 逐段执行。每步耗时几分钟到几十分钟,模型长生成时日志会静默,状态为「运行中」即正常。点击项目卡可进入详情浏览。</p>
+    </div>
+
+    <div class="guide">
+      <div class="gstep"><span class="gn">壹</span><div><div class="gt">拖入小说 TXT</div><div class="gd">文件名自动做书名,填集数和单集时长,一键建项目</div></div></div>
+      <div class="gstep"><span class="gn">贰</span><div><div class="gt">逐格点「运行」</div><div class="gd">大纲 → 角色 → 美术 → 剧本 → 分镜,AI 自动产出,前一步完后下一步解锁</div></div></div>
+      <div class="gstep"><span class="gn">叁</span><div><div class="gt">改提示词 · 去生图</div><div class="gd">角色/美术页的提示词可直接编辑保存,复制到即梦/可灵出图;台词也能双击改</div></div></div>
     </div>
 
     <div class="grid">
@@ -496,6 +531,20 @@ let curView = 'home', dTab = 'overview', dataCache = null, lastSig = null, artFi
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function api(path, opts){ const r = await fetch(path, opts); return r.json(); }
+// 短剧术语解释(hover 显示)
+const TERMS = {
+  '钩子':'开场 3 秒抓住观众的悬念或冲突,决定观众划走还是留下',
+  '断点':'集末留的扣子(悬念),逼观众点进下一集',
+  '悬念':'集末留的扣子,逼观众点进下一集',
+  '爽点':'让观众情绪被满足的桥段:反转/打脸/身份揭露/危机爆发等',
+  '爽点认领':'本集实际兑现了全剧哪条爽点线',
+  '节拍':'剧本里最小的动作或台词单位,一个节拍约 2-4 秒',
+  '人群':'同一场多个角色的机位与调度方案,避免画面混乱',
+  '弧光':'角色从开头到结尾的内心转变轨迹',
+  '铺垫':'前面埋下的伏笔,后面要兑现',
+  '兑现':'伏笔在此处揭晓,给观众情绪回报',
+};
+const T = w => TERMS[w] ? `<span class="term" data-tip="${esc(TERMS[w])}">${w}</span>` : w;
 
 /* ============ 视图切换 ============ */
 function goHome(){
@@ -520,6 +569,14 @@ function openProject(name){
   $('#crumbName').textContent = name;
   window.scrollTo({top:0});
   refresh();
+}
+
+async function delProject(name){
+  if (!confirm(`确定删除项目「${name}」?\n该项目的全部产物(大纲/角色/美术/剧本/分镜)都会被永久删除。`)) return;
+  const r = await api('/api/delete', {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({project: name})});
+  if (r.ok){ toast('项目已删除'); if (cur === name) goHome(); else { lastSig = null; refresh(); } }
+  else toast('删除失败:' + (r.error||''));
 }
 
 async function refresh(){
@@ -550,7 +607,7 @@ function renderHome(data){
     }).join('');
     return `<div class="pitem ${p.name===cur?'on':''}" onclick="openProject('${esc(p.name).replace(/'/g,"\\'")}')">
       <div class="pname"><span>${esc(p.name)}</span><span class="pdots">${dots}</span></div>
-      <div class="pmeta"><span>${done}/5 · ${p.files.length} 文件</span><span class="open">进入详情 →</span></div>
+      <div class="pmeta"><span>${done}/5 · ${p.files.length} 文件</span><span class="row-ops"><span class="pdel" title="删除项目" onclick="event.stopPropagation();delProject('${esc(p.name).replace(/'/g,"\\'")}')">✕</span><span class="open">进入详情 →</span></span></div>
     </div>`;
   }).join('');
   if (proj){
@@ -659,9 +716,59 @@ function selectEp(n){ scriptEp = n; lastSig = null; refresh(); }
 function copyBtn(){
   return `<button class="copy" onclick="copyText(this)">复制</button>`;
 }
-function pbox(label, text){
+function pbox(label, text, meta){
   if (!text) return '';
-  return `<div class="pbox"><div class="pbox-h"><span class="lb">${label}</span>${copyBtn()}</div><div class="pbox-t" onclick="this.classList.toggle('open')">${esc(text)}</div></div>`;
+  const m = meta ? `data-file="${esc(meta.file)}" data-path="${esc(meta.path)}"` : '';
+  return `<div class="pbox" ${m}><div class="pbox-h"><span class="lb">${label}</span>
+    <span class="pbox-ops">${meta?'<button class="copy" onclick="editPrompt(this)">编辑</button>':''}${copyBtn()}</span></div>
+    <div class="pbox-t" onclick="if(!this.dataset.editing)this.classList.toggle('open')">${esc(text)}</div></div>`;
+}
+async function editPrompt(btn){
+  const box = btn.closest('.pbox');
+  const t = box.querySelector('.pbox-t');
+  if (t.dataset.editing) return;
+  t.dataset.editing = '1';
+  const old = t.textContent;
+  t.classList.add('open');
+  t.innerHTML = `<textarea class="pedit">${esc(old)}</textarea><div class="pedit-ops"><button class="copy" data-act="save">保存</button><button class="copy" data-act="cancel">取消</button></div>`;
+  const ta = t.querySelector('.pedit');
+  ta.focus(); ta.style.height = Math.min(300, Math.max(80, ta.scrollHeight)) + 'px';
+  const done = async ok => {
+    delete t.dataset.editing;
+    if (ok){
+      const r = await api('/api/save', {method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({project: cur, file: box.dataset.file, fpath: box.dataset.path, value: ta.value})});
+      if (r.ok){ toast('已保存(原文已备份到 backups/)'); lastSig = null; refresh(); }
+      else toast('保存失败:' + (r.error||''));
+    } else refresh();
+  };
+  t.querySelector('[data-act=save]').onclick = () => done(true);
+  t.querySelector('[data-act=cancel]').onclick = () => done(false);
+}
+function toast(msg){
+  let el = $('#toast');
+  if (!el){ el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+async function dblEdit(el, file, path){
+  if (el.dataset.editing) return;
+  el.dataset.editing = '1';
+  const old = el.textContent;
+  el.innerHTML = `<textarea class="pedit">${esc(old)}</textarea><div class="pedit-ops"><button class="copy" data-a="s">保存</button><button class="copy" data-a="c">取消</button></div>`;
+  const ta = el.querySelector('.pedit');
+  ta.style.height = Math.min(220, Math.max(44, ta.scrollHeight)) + 'px';
+  ta.focus();
+  const finish = async save => {
+    if (save){
+      const r = await api('/api/save', {method:'POST',headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({project: cur, file, fpath: path, value: ta.value})});
+      if (r.ok){ toast('已保存到剧本(原文已备份)'); lastSig = null; refresh(); }
+      else { toast('保存失败:' + (r.error||'')); refresh(); }
+    } else refresh();
+  };
+  el.querySelector('[data-a=s]').onclick = () => finish(true);
+  el.querySelector('[data-a=c]').onclick = () => finish(false);
 }
 function copyText(btn){
   const t = btn.closest('.pbox').querySelector('.pbox-t').textContent;
@@ -694,7 +801,7 @@ const RENDER = {
     const beatTable = beats.length ? `
       <h4 class="sec-h">本剧爽点表 <span class="cnt">${beats.length}</span></h4>
       <div class="btable-wrap"><table class="btable">
-        <thead><tr><th>#</th><th>类型</th><th>权重</th><th>集</th><th>铺垫</th><th>兑现</th></tr></thead>
+        <thead><tr><th>#</th><th>类型</th><th>权重</th><th>集</th><th>${T('铺垫')}</th><th>${T('兑现')}</th></tr></thead>
         <tbody>${beats.map(b=>`<tr>
           <td class="mono">${esc(b.id)}</td><td>${esc(b.type)}</td>
           <td><span class="tier ${/major|high/i.test(b.weight)?'lead':'functional'}">${esc((b.weight||'').toUpperCase())}</span></td>
@@ -708,9 +815,9 @@ const RENDER = {
           <span class="name">第 <b>${e.ep}</b> 集</span>
           <span class="pmeta" style="font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)">${(e.sceneIds||[]).length} 场 · ${(e.characterIds||[]).length} 角色${(e.warnings&&e.warnings.length)?' · ⚠ '+esc(e.warnings.join('/')):''}</span>
         </div>
-        <div class="tagline"><span class="tag">钩子</span><span class="txt">${esc(e.hook)}</span></div>
-        <div class="tagline"><span class="tag dim">悬念</span><span class="txt">${esc(e.suspense)}</span></div>
-        ${e.crowdPlan?`<div class="tagline"><span class="tag dim">人群</span><span class="txt">${esc(e.crowdPlan)}</span></div>`:''}
+        <div class="tagline"><span class="tag">${T('钩子')}</span><span class="txt">${esc(e.hook)}</span></div>
+        <div class="tagline"><span class="tag dim">${T('悬念')}</span><span class="txt">${esc(e.suspense)}</span></div>
+        ${e.crowdPlan?`<div class="tagline"><span class="tag dim">${T('人群')}</span><span class="txt">${esc(e.crowdPlan)}</span></div>`:''}
         <div class="ep-ids">
           ${(e.sceneIds||[]).map(i=>`<span class="idchip sc">${esc(i)}</span>`).join('')}
           ${(e.characterIds||[]).map(i=>`<span class="idchip">${esc(i)}</span>`).join('')}
@@ -723,13 +830,15 @@ const RENDER = {
       <h4 class="sec-h">分集 <span class="cnt">${(json.episodes||[]).length}</span></h4>
       ${eps || '<div class="emptybox"><div class="big">大纲里没有分集数据</div></div>'}`;
   },
-  characters(json){
+  characters(json, proj){
     const list = json.characters || [];
+    const cfile = proj.files.find(f=>f.endsWith('-cast.json')) || '';
     $('#dOps').insertAdjacentHTML('beforeend', `<span class="chip">${list.length} 人</span>`);
     return (json.summary ? `<div class="syn" style="-webkit-line-clamp:unset;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);margin-bottom:16px">${esc(json.summary)}</div>` : '') +
-      `<div class="cgrid">${list.map(c => {
+      `<div class="cgrid">${list.map((c, ci) => {
         const p = c.persona || {};
         const img = c.image || {};
+        const P = key => cfile ? {file:cfile, path:`characters.${ci}.image.${key}`} : null;
         return `<div class="ccard">
         <div class="hd"><span class="nm">${esc(c.name)}</span><span class="tier ${tierCls(c.importance)}">${esc((c.importance||'').toUpperCase()||'')}</span></div>
         ${c.oneLiner?`<div class="role" style="color:var(--gold);font-size:12.5px">${esc(c.oneLiner)}</div>`:''}
@@ -738,18 +847,19 @@ const RENDER = {
         ${(p.personality&&p.personality.length)?`<div class="meta-row"><span class="desc-lb">性格</span>${personaChips(p.personality)}</div>`:''}
         ${p.temperament?`<div class="meta-row"><span class="desc-lb">气质</span>${esc(p.temperament)}</div>`:''}
         ${p.motivation?`<div class="meta-row"><span class="desc-lb">动机</span>${esc(p.motivation)}</div>`:''}
-        ${p.arc?`<div class="meta-row"><span class="desc-lb">弧光</span>${esc(p.arc)}</div>`:''}
+        ${p.arc?`<div class="meta-row"><span class="desc-lb">${T('弧光')}</span>${esc(p.arc)}</div>`:''}
         ${(p.relationships&&p.relationships.length)?`<div class="meta-row"><span class="desc-lb">关系</span>${p.relationships.map(r=>`${esc(r.name)}(${esc(r.relation)})`).join('、')}</div>`:''}
         <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词${img.style?` · ${esc(img.style)}`:''}</div>
-        ${pbox(img.promptLocal?'中文提示词':'提示词 PROMPT', img.promptLocal || img.prompt)}
-        ${pbox('英文提示词 EN', img.prompt)}
-        ${pbox('三视图 SHEET', img.sheet)}
-        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+        ${pbox(img.promptLocal?'中文提示词':'提示词 PROMPT', img.promptLocal || img.prompt, P(img.promptLocal?'promptLocal':'prompt'))}
+        ${pbox('英文提示词 EN', img.prompt, P('prompt'))}
+        ${pbox('三视图 SHEET', img.sheet, P('sheet'))}
+        ${pbox('负面 NEGATIVE', img.negativePrompt, P('negativePrompt'))}
       </div>`;
       }).join('')}</div>`;
   },
-  art(json){
+  art(json, proj){
     const scenes = json.scenes || [], props = json.props || [];
+    const afile = proj.files.find(x=>x.endsWith('-art.json')) || '';
     $('#dOps').insertAdjacentHTML('beforeend', `<span class="chip">${scenes.length + props.length} 项</span>`);
     const f = artFilter;
     const tabs = `<div class="ftabs">
@@ -757,25 +867,27 @@ const RENDER = {
       <button class="ftab ${f==='scene'?'on':''}" onclick="setArtFilter('scene')">场景<b>${scenes.length}</b></button>
       <button class="ftab ${f==='prop'?'on':''}" onclick="setArtFilter('prop')">道具<b>${props.length}</b></button>
     </div>`;
-    const sceneCard = s => {
+    const sceneCard = (s, si) => {
       const img = s.image || {};
       const lights = Array.isArray(s.lighting) ? s.lighting : [];
+      const SP = key => afile ? {file:afile, path:`scenes.${si}.image.${key}`} : null;
       return `<div class="scard" style="padding:16px 18px">
         <div class="hd"><span class="id">${esc(s.id)}</span><span class="nm">${esc(s.name)}</span>${s.primary?'<span class="primary-tag">主场景</span>':''}</div>
         ${s.summary?`<div class="meta-row">${esc(s.summary)}</div>`:''}
         ${s.usage?`<div class="meta-row"><span class="desc-lb">用途</span>${esc(s.usage)}</div>`:''}
         ${(s.anchors&&s.anchors.length)?`<div class="meta-row"><span class="desc-lb">锚点</span>${personaChips(s.anchors)}</div>`:''}
         ${lights.length?`<div class="meta-row"><span class="desc-lb">光照</span>${personaChips(lights.map(l=>l.state))}</div>`:''}
-        ${lights.map(l=>pbox(`光照 · ${l.state}`, l.prompt)).join('')}
+        ${lights.map((l, li)=>pbox(`光照 · ${l.state}`, l.prompt, afile?{file:afile, path:`scenes.${si}.lighting.${li}.prompt`}:null)).join('')}
         <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
-        ${pbox('提示词 PROMPT', img.prompt)}
-        ${pbox('三视图 SHEET', img.sheet)}
-        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+        ${pbox('提示词 PROMPT', img.prompt, SP('prompt'))}
+        ${pbox('三视图 SHEET', img.sheet, SP('sheet'))}
+        ${pbox('负面 NEGATIVE', img.negativePrompt, SP('negativePrompt'))}
         ${(img.tags&&img.tags.length)?`<div class="ep-ids">${personaChips(img.tags)}</div>`:''}
       </div>`;
     };
-    const propCard = p => {
+    const propCard = (p, pi) => {
       const img = p.image || {};
+      const PP = key => afile ? {file:afile, path:`props.${pi}.image.${key}`} : null;
       return `<div class="scard" style="padding:16px 18px">
         <div class="hd"><span class="id">${esc(p.id)}</span><span class="nm">${esc(p.name)}</span>${p.scale?`<span class="idchip">${esc(p.scale)}</span>`:''}</div>
         ${p.summary?`<div class="meta-row">${esc(p.summary)}</div>`:''}
@@ -784,11 +896,11 @@ const RENDER = {
         ${(p.carriedBy&&p.carriedBy.length)?`<div class="meta-row"><span class="desc-lb">携带者</span>${personaChips(p.carriedBy)}</div>`:''}
         ${(p.relatedScenes&&p.relatedScenes.length)?`<div class="meta-row"><span class="desc-lb">出现场景</span>${personaChips(p.relatedScenes)}</div>`:''}
         <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
-        ${pbox('提示词 PROMPT', img.prompt)}
-        ${pbox('负面 NEGATIVE', img.negativePrompt)}
+        ${pbox('提示词 PROMPT', img.prompt, PP('prompt'))}
+        ${pbox('负面 NEGATIVE', img.negativePrompt, PP('negativePrompt'))}
       </div>`;
     };
-    return tabs + (f!=='prop' ? scenes.map(sceneCard).join('') : '') + (f!=='scene' ? props.map(propCard).join('') : '');
+    return tabs + (f!=='prop' ? scenes.map((s,i)=>sceneCard(s,i)).join('') : '') + (f!=='scene' ? props.map((p,i)=>propCard(p,i)).join('') : '');
   },
   async script(json, proj){
     // 加载 cast / art 做 ID→名字映射(C01→陈默,S01→场景名)
@@ -809,6 +921,9 @@ const RENDER = {
     const eps = json.episodes || [];
     if (!eps.length) return '<div class="emptybox"><div class="big">剧本里没有分集数据</div></div>';
     const ep = eps.find(e => e.ep === scriptEp) || eps[0];
+    const epi = eps.indexOf(ep);
+    const sfile = proj.files.find(x=>x.endsWith('-script.json')) || '';
+    const dbl = (path, text) => sfile ? ` ondblclick="dblEdit(this,'${sfile}','${path}')" title="双击修改"` : '';
     const epStats = e => {
       const scenes = e.scenes || [];
       const beats = scenes.reduce((n, s) => n + (s.flow || []).length, 0);
@@ -819,15 +934,16 @@ const RENDER = {
       const st = epStats(e);
       return `<div class="ep-item ${e.ep===ep.ep?'on':''}" onclick="selectEp(${e.ep})">
         <div class="ei-h"><span>第 ${e.ep} 集</span><span style="font-family:var(--mono);font-size:10px;color:var(--ink-faint)">${e.targetSeconds||'—'}s 目标</span></div>
-        <div class="ei-m">${st.scenes} 场 · ${st.beats} 节拍 · ${st.lines} 台词</div>
-        <div class="ei-l"><b>钩子</b>${esc(e.hook||'')}</div>
-        <div class="ei-l"><b>断点</b>${esc(e.cliff||'')}</div>
+        <div class="ei-m">${st.scenes} 场 · ${st.beats} ${T('节拍')} · ${st.lines} 台词</div>
+        <div class="ei-l"><b>${T('钩子')}</b>${esc(e.hook||'')}</div>
+        <div class="ei-l"><b>${T('断点')}</b>${esc(e.cliff||'')}</div>
       </div>`;
     }).join('');
     const scenes = (ep.scenes || []).map((s, si) => {
+      const base = `episodes.${epi}.scenes.${si}.flow`;
       const rows = (s.flow || []).map((f, i) => f.action
-        ? `<div class="flow-row action"><span class="n">${i+1}</span><span class="c">${esc(f.action)}</span></div>`
-        : `<div class="flow-row line"><span class="n">${i+1}</span><span><span class="sp">${esc(cname(f.speaker))}</span>${esc(f.line||'')}${f.delivery?` <span class="dl">(${esc(f.delivery)})</span>`:''}</span></div>`
+        ? `<div class="flow-row action"><span class="n">${i+1}</span><span class="c editable" ${dbl(`${base}.${i}.action`)}>${esc(f.action)}</span></div>`
+        : `<div class="flow-row line"><span class="n">${i+1}</span><span><span class="sp">${esc(cname(f.speaker))}</span><span class="editable ltxt" ${dbl(`${base}.${i}.line`)}>${esc(f.line||'')}</span>${f.delivery?` <span class="dl">(${esc(f.delivery)})</span>`:''}</span></div>`
       ).join('');
       return `<div class="scene-block">
         <div class="scene-h">
@@ -847,12 +963,12 @@ const RENDER = {
     return `<div class="script-grid">
       <div class="ep-list">${list}</div>
       <div class="script-main">
-        <div class="ep-title">剧本 / 第 ${ep.ep} 集 <span class="tg">${st.scenes} 场 · ${st.beats} 节拍 · ${st.lines} 台词 · 目标 ${ep.targetSeconds||'—'}s</span></div>
+        <div class="ep-title">剧本 / 第 ${ep.ep} 集 <span class="tg">${st.scenes} 场 · ${st.beats} ${T('节拍')} · ${st.lines} 台词 · 目标 ${ep.targetSeconds||'—'}s</span></div>
         <div class="hook-cards">
-          <div class="hook-card"><div class="lb">钩子</div><div class="tx">${esc(ep.hook||'—')}</div></div>
-          <div class="hook-card"><div class="lb">断点</div><div class="tx">${esc(ep.cliff||'—')}</div></div>
+          <div class="hook-card"><div class="lb">${T('钩子')}</div><div class="tx">${esc(ep.hook||'—')}</div></div>
+          <div class="hook-card"><div class="lb">${T('断点')}</div><div class="tx">${esc(ep.cliff||'—')}</div></div>
         </div>
-        ${ep.beatsClaimed?`<div class="claim-row">爽点认领:<span class="idchip" style="margin-left:6px">${esc(ep.beatsClaimed)}</span></div>`:''}
+        ${ep.beatsClaimed?`<div class="claim-row">${T('爽点认领')}:<span class="idchip" style="margin-left:6px">${esc(ep.beatsClaimed)}</span></div>`:''}
         ${scenes || '<div class="emptybox"><div class="big">本集暂无场次数据</div></div>'}
       </div>
     </div>`;
@@ -931,9 +1047,11 @@ async function renderLibrary(proj){
     return await api(`/ws/${encodeURIComponent(cur)}/${encodeURIComponent(f)}`).catch(()=>null);
   };
   const [c, a] = await Promise.all([load('-cast.json'), load('-art.json')]);
-  const chars = (c && c.characters || []).map(x => ({ kind:'角色', nm:x.name, sub:x.oneLiner, img:x.image||{} }));
-  const scenes = (a && a.scenes || []).map(x => ({ kind:'场景', nm:x.name, sub:x.summary, img:x.image||{} }));
-  const props  = (a && a.props  || []).map(x => ({ kind:'道具', nm:x.name, sub:x.summary, img:x.image||{} }));
+  const cfile = proj.files.find(f=>f.endsWith('-cast.json')) || '';
+  const afile = proj.files.find(f=>f.endsWith('-art.json')) || '';
+  const chars = (c && c.characters || []).map((x, i) => ({ kind:'角色', nm:x.name, sub:x.oneLiner, img:x.image||{}, file:cfile, path:`characters.${i}.image` }));
+  const scenes = (a && a.scenes || []).map((x, i) => ({ kind:'场景', nm:x.name, sub:x.summary, img:x.image||{}, file:afile, path:`scenes.${i}.image` }));
+  const props  = (a && a.props  || []).map((x, i) => ({ kind:'道具', nm:x.name, sub:x.summary, img:x.image||{}, file:afile, path:`props.${i}.image` }));
   const all = [...chars, ...scenes, ...props];
   if (!all.length){
     pane.innerHTML = `<div class="emptybox"><div class="big">还没有可聚合的素材</div>先完成「角色」和「美术」两个阶段。</div>`;
@@ -951,9 +1069,9 @@ async function renderLibrary(proj){
       <div class="hd"><span class="nm">${esc(x.nm)}</span><span class="idchip">${x.kind}</span></div>
       ${x.sub?`<div class="meta-row">${esc(x.sub)}</div>`:''}
       <div style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">出图提示词</div>
-      ${pbox(x.img.promptLocal?'中文提示词':'提示词 PROMPT', x.img.promptLocal || x.img.prompt)}
-      ${pbox('英文提示词 EN', x.img.prompt)}
-      ${pbox('负面 NEGATIVE', x.img.negativePrompt)}
+      ${pbox(x.img.promptLocal?'中文提示词':'提示词 PROMPT', x.img.promptLocal || x.img.prompt, x.file?{file:x.file, path:x.path+'.'+(x.img.promptLocal?'promptLocal':'prompt')}:null)}
+      ${pbox('英文提示词 EN', x.img.prompt, x.file?{file:x.file, path:x.path+'.prompt'}:null)}
+      ${pbox('负面 NEGATIVE', x.img.negativePrompt, x.file?{file:x.file, path:x.path+'.negativePrompt'}:null)}
     </div>`).join('');
   pane.innerHTML = tabs + `<div class="cgrid">${cards}</div>`;
 }
